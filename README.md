@@ -396,4 +396,4 @@ For issues and questions, please open an issue on GitHub.
 
 ---
 
-Built with ❤️ using FastAPI
+Built with Love using FastAPI
