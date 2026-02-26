@@ -1,7 +1,9 @@
 {
-  "city": "Panabo",
+  "city": "0",
   "dateFrom": "2024-01-01",
   "dateTo": "2024-01-31",
-  "province": "Pampanga",
-  "species": "tilapia"
+  "province": "0",
+  "barangay": "0",
+  "fingerlings": 5000,
+  "species": "0"
 }

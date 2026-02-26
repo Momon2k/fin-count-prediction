@@ -360,7 +360,7 @@ The predictor expects models to work with these features:
 |----------|-------------|---------|
 | `PORT` | Server port | `8000` |
 | `ENVIRONMENT` | Environment (development/production) | `development` |
-| `ALLOWED_ORIGINS` | CORS allowed origins | `http://localhost:3000` |
+| `ALLOWED_ORIGINS` | CORS allowed origins (comma-separated or JSON array) | `http://localhost:3000,http://localhost:3001` |
 | `MODELS_DIR` | Models directory path | `models` |
 | `TILAPIA_MODEL_PATH` | Tilapia model file path | `models/tilapia_forecast_best_model.pkl` |
 | `BANGUS_MODEL_PATH` | Bangus model file path | `models/bangus_forecast_best_model.pkl` |
@@ -376,6 +376,7 @@ The predictor expects models to work with these features:
 ### CORS errors
 - Add your frontend URL to `ALLOWED_ORIGINS` environment variable
 - Check that the URL format matches exactly (including protocol)
+- If your platform UI expects JSON, use a JSON array string (e.g. `["https://a.com","https://b.com"]`)
 
 ### Port conflicts
 - Change the `PORT` environment variable

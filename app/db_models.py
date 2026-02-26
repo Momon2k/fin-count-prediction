@@ -1,7 +1,8 @@
 """
 SQLAlchemy ORM models for database tables
 """
-from sqlalchemy import Column, Integer, String, Date, DECIMAL, TIMESTAMP, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, TIMESTAMP, Text, ForeignKey
+from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -37,9 +38,9 @@ class Prediction(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     request_id = Column(String(36), ForeignKey("prediction_requests.request_id"), nullable=False, index=True)
     prediction_date = Column(Date, nullable=False, index=True)
-    predicted_harvest = Column(DECIMAL(10, 2), nullable=False)
-    confidence_lower = Column(DECIMAL(10, 2), nullable=True)
-    confidence_upper = Column(DECIMAL(10, 2), nullable=True)
+    predicted_harvest = Column(DOUBLE, nullable=False)
+    confidence_lower = Column(DOUBLE, nullable=True)
+    confidence_upper = Column(DOUBLE, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     
     # Relationship to request

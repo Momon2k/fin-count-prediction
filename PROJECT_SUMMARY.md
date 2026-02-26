@@ -7,28 +7,38 @@ Your complete FastAPI ML Service for Fish Harvest Forecasting is now ready!
 ### 📁 Project Structure
 
 ```
-fastapi/
+fast-api-prediction/
 ├── app/
 │   ├── __init__.py              ✅ Package initialization
-│   ├── main.py                  ✅ FastAPI application with all endpoints
+│   ├── main.py                  ✅ FastAPI application (API endpoints)
 │   ├── models.py                ✅ Pydantic request/response models
 │   ├── predictor.py             ✅ ML prediction logic
-│   ├── config.py                ✅ Configuration management
+│   ├── config.py                ✅ Configuration management (CORS, model paths, DB URL)
+│   ├── database.py              ✅ SQLAlchemy engine/session (optional)
+│   ├── db_models.py             ✅ SQLAlchemy ORM tables (optional)
+│   ├── crud.py                  ✅ DB CRUD helpers (optional)
 │   └── models/
 │       ├── tilapia_forecast_best_model.pkl  ✅ Tilapia ML model
 │       └── bangus_forecast_best_model.pkl   ✅ Bangus ML model
 ├── models/
 │   └── .gitkeep                 ✅ Placeholder directory
-├── Dockerfile                   ✅ Docker configuration
-├── railway.toml                 ✅ Railway deployment config
-├── requirements.txt             ✅ Python dependencies
-├── .dockerignore               ✅ Docker ignore rules
-├── .env.example                ✅ Environment variables template
-├── .gitignore                  ✅ Git ignore rules
-├── README.md                   ✅ Complete documentation
-├── DEPLOYMENT.md               ✅ Deployment guide
-├── QUICKSTART.md               ✅ Quick start guide
-└── PROJECT_SUMMARY.md          ✅ This file
+├── main.py                      ⚠️ Minimal sample app (not used by Dockerfile)
+├── Dockerfile                   ✅ Docker configuration (Railway-ready)
+├── railway.toml                 ✅ Railway deployment config (uses Dockerfile)
+├── railway.json                 ⚠️ Legacy/alternative Railway config
+├── requirements.txt             ✅ Python dependencies (local/dev)
+├── requirements-docker.txt      ✅ Python dependencies (Docker/Railway)
+├── .dockerignore                ✅ Docker ignore rules
+├── .env.example                 ✅ Environment variables template
+├── .gitignore                   ✅ Git ignore rules
+├── README.md                    ✅ Documentation
+├── DEPLOYMENT.md                ✅ Deployment guide
+├── QUICKSTART.md                ✅ Quick start guide
+├── DATABASE_SETUP.md            ✅ Local DB setup guide (optional)
+├── DATABASE_RAILWAY_SETUP.md    ✅ Railway DB setup guide (optional)
+├── DATABASE_INTEGRATION_SUMMARY.md ✅ DB integration notes (optional)
+├── RAILWAY_DEPLOYMENT_GUIDE.md  ✅ Railway deployment notes
+└── PROJECT_SUMMARY.md           ✅ This file
 ```
 
 ## 🚀 Key Features Implemented
@@ -41,6 +51,7 @@ fastapi/
 - ✅ Health check endpoint
 - ✅ Model listing endpoint
 - ✅ Prediction endpoint with validation
+- ✅ Optional database saving + saved-forecast retrieval endpoints (when `DATABASE_URL` is set)
 
 ### 2. **Data Models** (`app/models.py`)
 - ✅ `PredictionRequest` - Input validation
@@ -65,15 +76,21 @@ fastapi/
 - ✅ Model paths configuration
 - ✅ Prediction limits
 - ✅ Pydantic settings management
+- ✅ Optional database configuration via `DATABASE_URL`
 
-### 5. **Deployment Ready**
+### 5. **Database (Optional)** (`app/database.py`, `app/db_models.py`, `app/crud.py`)
+- ✅ SQLAlchemy session/engine with connection health checks
+- ✅ MySQL support (Railway `mysql://` URL auto-converted for SQLAlchemy)
+- ✅ Stores forecast requests + forecast points when enabled
+
+### 6. **Deployment Ready**
 - ✅ Dockerfile optimized for Railway
 - ✅ Railway configuration file
 - ✅ Health checks configured
 - ✅ Environment variables template
 - ✅ Docker ignore rules
 
-### 6. **Documentation**
+### 7. **Documentation**
 - ✅ Comprehensive README
 - ✅ Deployment guide
 - ✅ Quick start guide
@@ -90,6 +107,9 @@ fastapi/
 | GET | `/api/v1/health` | Health check |
 | GET | `/api/v1/models` | List available models |
 | POST | `/api/v1/predict` | Get harvest forecasts |
+| GET | `/api/v1/predictions` | List saved forecast requests (DB required) |
+| GET | `/api/v1/predictions/{request_id}` | Get saved forecast + points (DB required) |
+| DELETE | `/api/v1/predictions/{request_id}` | Delete saved forecast (DB required) |
 
 ## 🔧 Next Steps
 
@@ -131,6 +151,9 @@ ML_SERVICE_URL=https://your-service.railway.app
 ```
 
 Update your API route to call the FastAPI service (see DEPLOYMENT.md for details).
+
+### 4. **Enable Database Saving (Optional)**
+Set `DATABASE_URL` in your environment (locally or on Railway). If `DATABASE_URL` is not set, the service still runs normally, but forecast requests won’t be stored.
 
 ## 📊 Model Information
 
@@ -193,6 +216,10 @@ default_forecast_days: int = 30  # Default if not specified
 - **README.md** - Complete project documentation
 - **QUICKSTART.md** - Get started in 5 minutes
 - **DEPLOYMENT.md** - Detailed deployment guide
+- **RAILWAY_DEPLOYMENT_GUIDE.md** - Railway deployment notes
+- **DATABASE_SETUP.md** - Local database setup (optional)
+- **DATABASE_RAILWAY_SETUP.md** - Railway database setup (optional)
+- **DATABASE_INTEGRATION_SUMMARY.md** - What DB integration adds (optional)
 - **PROJECT_SUMMARY.md** - This file
 
 ## 🎓 Learning Resources
@@ -236,7 +263,7 @@ All requests and responses are validated using Pydantic models:
 
 1. **Model Loading**: Models are loaded once at startup and cached
 2. **Async Endpoints**: FastAPI handles concurrent requests efficiently
-3. **Docker Optimization**: Multi-stage builds for smaller images
+3. **Docker Optimization**: Slim base image + cached dependency layers
 4. **Railway Scaling**: Can scale horizontally if needed
 
 ## 🐛 Common Issues & Solutions

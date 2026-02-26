@@ -1,43 +1,56 @@
 """
 Pydantic models for request/response validation
 """
-from datetime import date, datetime
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, validator
+from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictFloat,
+    StrictInt,
+    constr,
+    field_validator,
+)
+
+ISODate = constr(pattern=r"^\d{4}-\d{2}-\d{2}$")
 
 
 class PredictionRequest(BaseModel):
     """Request model for harvest forecast"""
     
-    species: str = Field(..., description="Fish species (tilapia or bangus)")
-    date_from: str = Field(..., alias="dateFrom", description="Start date (YYYY-MM-DD)")
-    date_to: str = Field(..., alias="dateTo", description="End date (YYYY-MM-DD)")
-    province: str = Field(..., description="Province name")
-    city: str = Field(..., description="City/Municipality name")
+    species: constr(min_length=1) = Field(..., description="Fish species label")
+    date_from: ISODate = Field(..., alias="dateFrom", description="Start date (YYYY-MM-DD)")
+    date_to: ISODate = Field(..., alias="dateTo", description="End date (YYYY-MM-DD)")
+    province: constr(min_length=1) = Field(..., description="Province label")
+    municipality: constr(min_length=1) = Field(
+        ...,
+        validation_alias=AliasChoices("municipality", "city"),
+        description="Municipality/City label",
+    )
+    barangay: constr(min_length=1) = Field(..., description="Barangay label")
+    fingerlings: StrictFloat = Field(..., description="Fingerlings count (numeric)")
     
-    class Config:
-        populate_by_name = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
             "example": {
                 "species": "tilapia",
                 "dateFrom": "2024-01-01",
                 "dateTo": "2024-01-31",
                 "province": "Pampanga",
-                "city": "Mexico"
+                "municipality": "Mexico",
+                "barangay": "San Roque",
+                "fingerlings": 5000.0,
             }
-        }
+        },
+    )
     
-    @validator("species")
-    def validate_species(cls, v):
-        """Validate species is either tilapia or bangus"""
-        v = v.lower()
-        if v not in ["tilapia", "bangus"]:
-            raise ValueError("Species must be either 'tilapia' or 'bangus'")
-        return v
-    
-    @validator("date_from", "date_to")
-    def validate_date_format(cls, v):
-        """Validate date format"""
+    @field_validator("date_from", "date_to")
+    @classmethod
+    def validate_date_value(cls, v: str) -> str:
         try:
             datetime.strptime(v, "%Y-%m-%d")
             return v
@@ -48,43 +61,57 @@ class PredictionRequest(BaseModel):
 class InputFeatures(BaseModel):
     """Input features used for prediction"""
     
-    fingerlings: float = Field(..., description="Number of fingerlings")
-    survival_rate: float = Field(..., description="Survival rate (0-1)")
-    avg_weight: float = Field(..., description="Average weight (kg)")
+    species: constr(min_length=1) = Field(..., description="Fish species label")
+    barangay: constr(min_length=1) = Field(..., description="Barangay label")
+    municipality: constr(min_length=1) = Field(..., description="Municipality/City label")
+    province: constr(min_length=1) = Field(..., description="Province label")
+    fingerlings: StrictFloat = Field(..., description="Fingerlings count (numeric)")
+    year: StrictInt = Field(..., description="Year derived from the forecast date")
+    month: StrictInt = Field(..., description="Month derived from the forecast date")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "fingerlings": 1000.0,
-                "survival_rate": 0.85,
-                "avg_weight": 0.25
+                "species": "tilapia",
+                "barangay": "San Roque",
+                "municipality": "Mexico",
+                "province": "Pampanga",
+                "fingerlings": 5000.0,
+                "year": 2024,
+                "month": 1,
             }
         }
+    )
 
 
 class PredictionPoint(BaseModel):
     """Single harvest forecast point"""
     
-    date: str = Field(..., description="Forecast date (YYYY-MM-DD)")
-    predicted_harvest: float = Field(..., description="Predicted harvest amount (kg)")
+    date: ISODate = Field(..., description="Forecast date (YYYY-MM-DD)")
+    predicted_harvest: StrictFloat = Field(..., description="Predicted harvest amount (kg)")
     input_features: InputFeatures = Field(..., description="Input features used for this prediction")
-    confidence_lower: Optional[float] = Field(None, description="Lower confidence bound")
-    confidence_upper: Optional[float] = Field(None, description="Upper confidence bound")
+    confidence_lower: Optional[StrictFloat] = Field(None, description="Lower confidence bound")
+    confidence_upper: Optional[StrictFloat] = Field(None, description="Upper confidence bound")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "date": "2024-01-15",
                 "predicted_harvest": 1250.50,
                 "input_features": {
-                    "fingerlings": 1000.0,
-                    "survival_rate": 0.85,
-                    "avg_weight": 0.25
+                    "species": "tilapia",
+                    "barangay": "San Roque",
+                    "municipality": "Mexico",
+                    "province": "Pampanga",
+                    "fingerlings": 5000.0,
+                    "year": 2024,
+                    "month": 1,
                 },
                 "confidence_lower": 1100.00,
-                "confidence_upper": 1400.00
+                "confidence_upper": 1400.00,
             }
         }
+    )
 
 
 class ModelInfo(BaseModel):
@@ -96,28 +123,50 @@ class ModelInfo(BaseModel):
     last_trained: Optional[str] = Field(None, description="Last training date")
     features_used: Optional[List[str]] = Field(None, description="Features used in the model")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "model_name": "Tilapia Harvest Forecast Model",
-                "species": "tilapia",
+                "model_name": "Unified Fingerlings Harvest Forecast Model",
+                "species": "all",
                 "version": "1.0.0",
                 "last_trained": "2024-01-01",
-                "features_used": ["month", "province", "city", "avg_weight", "fingerlings", "survival_rate"]
+                "features_used": [
+                    "Species",
+                    "Barangay",
+                    "Municipality",
+                    "Province",
+                    "Fingerlings",
+                    "Year",
+                    "Month",
+                ],
             }
         }
+    )
+
+
+class PredictionMetadata(BaseModel):
+    species: constr(min_length=1) = Field(..., description="Fish species label")
+    province: constr(min_length=1) = Field(..., description="Province label")
+    city: constr(min_length=1) = Field(..., description="Municipality/City label")
+    barangay: constr(min_length=1) = Field(..., description="Barangay label")
+    date_from: ISODate = Field(..., description="Start date (YYYY-MM-DD)")
+    date_to: ISODate = Field(..., description="End date (YYYY-MM-DD)")
+    prediction_count: StrictInt = Field(..., description="Number of prediction points returned")
+    total_fingerlings: StrictFloat = Field(..., description="Sum of fingerlings across predictions")
+    request_id: Optional[str] = Field(None, description="Database request identifier, if available")
+    timestamp: str = Field(..., description="Response generation timestamp (UTC, ISO 8601)")
 
 
 class PredictionResponse(BaseModel):
     """Response model for harvest forecast"""
     
-    success: bool = Field(..., description="Whether forecast was successful")
+    success: Literal[True] = Field(True, description="Always true for successful responses")
     predictions: List[PredictionPoint] = Field(..., description="List of harvest forecasts")
     model_info: ModelInfo = Field(..., description="Information about the model used")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: PredictionMetadata = Field(..., description="Metadata about the forecast request/response")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "predictions": [
@@ -125,38 +174,54 @@ class PredictionResponse(BaseModel):
                         "date": "2024-01-01",
                         "predicted_harvest": 1250.50,
                         "confidence_lower": 1100.00,
-                        "confidence_upper": 1400.00
+                        "confidence_upper": 1400.00,
                     }
                 ],
                 "model_info": {
-                    "model_name": "Tilapia Harvest Forecast Model",
-                    "species": "tilapia",
-                    "version": "1.0.0"
+                    "model_name": "Unified Fingerlings Harvest Forecast Model",
+                    "species": "all",
+                    "version": "1.0.0",
                 },
                 "metadata": {
+                    "species": "tilapia",
                     "province": "Pampanga",
                     "city": "Mexico",
-                    "forecast_count": 12
-                }
+                    "barangay": "San Roque",
+                    "date_from": "2024-01-01",
+                    "date_to": "2024-01-31",
+                    "prediction_count": 1,
+                    "total_fingerlings": 1000.0,
+                    "request_id": "abc123",
+                    "timestamp": "2024-01-15T10:30:00Z",
+                },
             }
         }
+    )
+
+    @field_validator("predictions")
+    @classmethod
+    def validate_predictions_non_empty(cls, v: List[PredictionPoint]) -> List[PredictionPoint]:
+        if len(v) == 0:
+            raise ValueError("predictions must not be empty for a successful response")
+        return v
 
 
 class ErrorResponse(BaseModel):
     """Error response model"""
     
-    success: bool = Field(False, description="Always false for errors")
+    success: Literal[False] = Field(False, description="Always false for errors")
     error: str = Field(..., description="Error message")
     detail: Optional[str] = Field(None, description="Detailed error information")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": False,
                 "error": "Model not found",
-                "detail": "The requested model file does not exist"
+                "detail": "The requested model file does not exist",
             }
         }
+    )
 
 
 class HealthResponse(BaseModel):
@@ -167,18 +232,16 @@ class HealthResponse(BaseModel):
     models_loaded: Dict[str, bool] = Field(..., description="Status of loaded models")
     timestamp: str = Field(..., description="Current timestamp")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "status": "healthy",
                 "version": "1.0.0",
-                "models_loaded": {
-                    "tilapia": True,
-                    "bangus": True
-                },
-                "timestamp": "2024-01-15T10:30:00Z"
+                "models_loaded": {"tilapia": True, "bangus": True},
+                "timestamp": "2024-01-15T10:30:00Z",
             }
         }
+    )
 
 
 class ModelListResponse(BaseModel):
@@ -187,23 +250,24 @@ class ModelListResponse(BaseModel):
     models: List[Dict[str, Any]] = Field(..., description="List of available models")
     count: int = Field(..., description="Number of models")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "models": [
                     {
                         "species": "tilapia",
                         "name": "Tilapia Harvest Forecast Model",
                         "status": "loaded",
-                        "path": "models/tilapia_forecast_best_model.pkl"
+                        "path": "models/tilapia_forecast_best_model.pkl",
                     },
                     {
                         "species": "bangus",
                         "name": "Bangus Harvest Forecast Model",
                         "status": "loaded",
-                        "path": "models/bangus_forecast_best_model.pkl"
-                    }
+                        "path": "models/bangus_forecast_best_model.pkl",
+                    },
                 ],
-                "count": 2
+                "count": 2,
             }
         }
+    )

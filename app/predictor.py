@@ -17,6 +17,8 @@ from app.models import PredictionPoint, ModelInfo
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+FEATURE_COLUMNS = ["Species", "Barangay", "Municipality", "Province", "Fingerlings", "Year", "Month"]
+
 
 class ModelPredictor:
     """Handles ML model loading and predictions"""
@@ -25,21 +27,135 @@ class ModelPredictor:
         """Initialize the predictor"""
         self.models: Dict[str, Any] = {}
         self.model_info: Dict[str, Dict] = {}
+        self.unified_model: Optional[Any] = None
+        self.label_encoders: Optional[Dict[str, Any]] = None
+        self.scaler: Optional[Any] = None
         self._load_models()
     
+    def _resolve_model_path(self, species: str, configured_path: str) -> Optional[str]:
+        if configured_path and os.path.exists(configured_path):
+            return configured_path
+
+        models_dir = getattr(settings, "models_dir", None) or ""
+        if not models_dir or not os.path.isdir(models_dir):
+            return None
+
+        candidates: List[str] = []
+        for name in os.listdir(models_dir):
+            if not name.lower().endswith(".pkl"):
+                continue
+            if species.lower() not in name.lower():
+                continue
+            candidates.append(os.path.join(models_dir, name))
+
+        if not candidates:
+            return None
+
+        candidates.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+        return candidates[0]
+
+    def _resolve_artifact_path(self, configured_path: str, name_contains: str) -> Optional[str]:
+        if configured_path and os.path.exists(configured_path):
+            return configured_path
+
+        models_dir = getattr(settings, "models_dir", None) or ""
+        if not models_dir or not os.path.isdir(models_dir):
+            return None
+
+        candidates: List[str] = []
+        for name in os.listdir(models_dir):
+            if not name.lower().endswith(".pkl"):
+                continue
+            if name_contains.lower() not in name.lower():
+                continue
+            candidates.append(os.path.join(models_dir, name))
+
+        if not candidates:
+            return None
+
+        candidates.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+        return candidates[0]
+
+    def _load_artifact(self, artifact_path: str) -> Any:
+        loading_methods = [
+            ("latin1", lambda f: pickle.load(f, encoding="latin1")),
+            ("bytes", lambda f: pickle.load(f, encoding="bytes")),
+            ("default", lambda f: pickle.load(f)),
+        ]
+
+        try:
+            import joblib
+
+            loading_methods.insert(0, ("joblib", lambda f: joblib.load(artifact_path)))
+        except ImportError:
+            pass
+
+        last_error: Optional[Exception] = None
+        for method_name, load_func in loading_methods:
+            try:
+                logger.info(f"   Attempting to load artifact with method: {method_name}")
+                if method_name == "joblib":
+                    return load_func(None)
+                with open(artifact_path, "rb") as f:
+                    return load_func(f)
+            except Exception as e:
+                last_error = e
+                continue
+
+        raise RuntimeError(f"Failed to load artifact: {artifact_path}. Last error: {last_error}")
+
     def _load_models(self):
         """Load all available models"""
         logger.info("Loading ML models...")
+
+        unified_path = self._resolve_artifact_path(getattr(settings, "unified_model_path", ""), "unified")
+        encoders_path = self._resolve_artifact_path(getattr(settings, "label_encoders_path", ""), "label_encoders")
+        scaler_path = self._resolve_artifact_path(getattr(settings, "scaler_path", ""), "scaler")
+
+        if unified_path:
+            try:
+                logger.info(f"Loading unified model from {unified_path}")
+                self.unified_model = self._load_artifact(unified_path)
+                self.model_info["unified"] = {
+                    "name": "Unified Fingerlings Harvest Forecast Model",
+                    "species": "all",
+                    "version": "1.0.0",
+                    "path": unified_path,
+                    "features_used": FEATURE_COLUMNS,
+                    "last_trained": datetime.fromtimestamp(os.path.getmtime(unified_path)).strftime("%Y-%m-%d"),
+                }
+            except Exception as e:
+                logger.error(f"✗ Failed to load unified model: {e}")
+
+        if encoders_path:
+            try:
+                logger.info(f"Loading label encoders from {encoders_path}")
+                loaded = self._load_artifact(encoders_path)
+                if isinstance(loaded, dict):
+                    self.label_encoders = loaded
+                else:
+                    raise ValueError("label_encoders.pkl must contain a dict of encoders")
+            except Exception as e:
+                logger.error(f"✗ Failed to load label encoders: {e}")
+
+        if scaler_path:
+            try:
+                logger.info(f"Loading scaler from {scaler_path}")
+                self.scaler = self._load_artifact(scaler_path)
+            except Exception as e:
+                logger.error(f"✗ Failed to load scaler: {e}")
         
         # Load Tilapia model
-        if os.path.exists(settings.tilapia_model_path):
-            self._load_single_model('tilapia', settings.tilapia_model_path, 'Tilapia Harvest Forecast Model')
+        tilapia_path = self._resolve_model_path("tilapia", settings.tilapia_model_path)
+        if tilapia_path:
+            self._load_single_model('tilapia', tilapia_path, 'Tilapia Harvest Forecast Model')
         else:
             logger.warning(f"✗ Tilapia model not found at {settings.tilapia_model_path}")
         
         # Load Bangus model
-        if os.path.exists(settings.bangus_model_path):
-            self._load_single_model('bangus', settings.bangus_model_path, 'Bangus Harvest Forecast Model')
+        bangus_path = self._resolve_model_path("bangus", settings.bangus_model_path)
+        if bangus_path:
+            self._load_single_model('bangus', bangus_path, 'Bangus Harvest Forecast Model')
         else:
             logger.warning(f"✗ Bangus model not found at {settings.bangus_model_path}")
         
@@ -69,17 +185,7 @@ class ModelPredictor:
                     with open(model_path, 'rb') as f:
                         model = load_func(f)
                 
-                # Get feature names from the model
-                features_used = None
-                if hasattr(model, 'feature_names_in_'):
-                    features_used = list(model.feature_names_in_)
-                elif hasattr(model, 'get_feature_names_out'):
-                    try:
-                        features_used = list(model.get_feature_names_out())
-                    except:
-                        features_used = ['Fingerlings', 'SurvivalRate', 'AvgWeight']
-                else:
-                    features_used = ['Fingerlings', 'SurvivalRate', 'AvgWeight']
+                features_used = FEATURE_COLUMNS
                 
                 # Get model file modification time as last_trained date
                 import os
@@ -108,18 +214,37 @@ class ModelPredictor:
     
     def is_model_loaded(self, species: str) -> bool:
         """Check if a model is loaded"""
-        return species.lower() in self.models
+        if self.unified_model is not None:
+            return True
+        if isinstance(species, str):
+            return species.lower() in self.models
+        return False
     
     def get_model_info(self, species: str) -> Optional[Dict]:
         """Get information about a loaded model"""
-        return self.model_info.get(species.lower())
+        if isinstance(species, str):
+            info = self.model_info.get(species.lower())
+            if info is not None:
+                return info
+
+        if self.unified_model is None:
+            return None
+
+        unified = self.model_info.get("unified")
+        if unified is None:
+            return None
+
+        return unified
     
     def get_all_models_info(self) -> List[Dict]:
         """Get information about all loaded models"""
         models_list = []
-        for species, info in self.model_info.items():
+        for key, info in self.model_info.items():
             model_data = info.copy()
-            model_data['status'] = 'loaded' if self.is_model_loaded(species) else 'not_loaded'
+            if key == "unified":
+                model_data["status"] = "loaded" if self.unified_model is not None else "not_loaded"
+            else:
+                model_data["status"] = "loaded" if key in self.models else "not_loaded"
             models_list.append(model_data)
         return models_list
     
@@ -129,7 +254,9 @@ class ModelPredictor:
         date_from: str,
         date_to: str,
         province: str,
-        city: str
+        municipality: str,
+        barangay: str,
+        fingerlings: float,
     ) -> List[PredictionPoint]:
         """
         Make harvest forecasts for the specified date range (by month)
@@ -139,16 +266,16 @@ class ModelPredictor:
             date_from: Start date (YYYY-MM-DD)
             date_to: End date (YYYY-MM-DD)
             province: Province name
-            city: City/Municipality name
+            municipality: Municipality/City name
+            barangay: Barangay name
+            fingerlings: Fingerlings count (numeric)
         
         Returns:
             List of prediction points with harvest forecasts
         """
-        species = species.lower()
-        
         # Check if model is loaded
-        if not self.is_model_loaded(species):
-            raise ValueError(f"Model for {species} is not loaded")
+        if self.unified_model is None:
+            raise ValueError("Model is not loaded")
         
         # Parse dates
         start_date = datetime.strptime(date_from, "%Y-%m-%d")
@@ -163,21 +290,35 @@ class ModelPredictor:
             raise ValueError(f"Date range exceeds maximum of {settings.max_forecast_days} days")
         
         # Generate date range (monthly basis for harvest forecasts)
-        date_range = pd.date_range(start=start_date, end=end_date, freq='MS')  # MS = Month Start
+        start_month = start_date.replace(day=1)
+        end_month = end_date.replace(day=1)
+        date_range = pd.date_range(start=start_month, end=end_month, freq="MS")  # MS = Month Start
         
         # Prepare features for prediction
         features_df = self._prepare_features(
             date_range=date_range,
             province=province,
-            city=city,
-            species=species
+            municipality=municipality,
+            barangay=barangay,
+            fingerlings=fingerlings,
+            species=species,
         )
         
         # Get model
-        model = self.models[species]
+        model = self.unified_model
         
         # Make predictions
         try:
+            if list(features_df.columns) != FEATURE_COLUMNS:
+                raise ValueError("Feature columns do not match the training contract")
+
+            logger.info(f"Feature columns: {list(features_df.columns)}")
+            logger.info(f"Feature dtypes: {features_df.dtypes.astype(str).to_dict()}")
+            logger.info(f"Feature shape: {features_df.shape}")
+
+            if features_df.shape[1] != 7:
+                raise ValueError("Final model input must have shape (n_samples, 7)")
+
             predictions = model.predict(features_df)
             
             # If model supports prediction intervals, get them
@@ -191,12 +332,15 @@ class ModelPredictor:
             # Create prediction points (harvest forecasts by month)
             prediction_points = []
             for i, date in enumerate(date_range):
-                # Get the input features used for this prediction
                 from app.models import InputFeatures
                 input_features = InputFeatures(
-                    fingerlings=float(features_df.iloc[i]['Fingerlings']),
-                    survival_rate=float(features_df.iloc[i]['SurvivalRate']),
-                    avg_weight=float(features_df.iloc[i]['AvgWeight'])
+                    species=species,
+                    barangay=barangay,
+                    municipality=municipality,
+                    province=province,
+                    fingerlings=float(fingerlings),
+                    year=int(date.year),
+                    month=int(date.month),
                 )
                 
                 predicted_value = float(predictions[i])
@@ -234,62 +378,85 @@ class ModelPredictor:
         self,
         date_range: pd.DatetimeIndex,
         province: str,
-        city: str,
+        municipality: str,
+        barangay: str,
+        fingerlings: float,
         species: str
     ) -> pd.DataFrame:
         """
         Prepare features for harvest forecast model
-        
-        Creates features that match the model's training data:
-        - AvgWeight: Average weight of fish
-        - Fingerlings: Number of fingerlings
-        - SurvivalRate: Survival rate percentage
-        - Month-based features for harvest forecasting
         """
-        # Get the model to check what features it expects
-        model = self.models[species]
-        
-        # Try to get feature names from the model
-        feature_names = None
-        if hasattr(model, 'feature_names_in_'):
-            feature_names = model.feature_names_in_
-        elif hasattr(model, 'get_feature_names_out'):
-            try:
-                feature_names = model.get_feature_names_out()
-            except:
-                pass
-        
-        # Create base dataframe with the number of predictions needed
         n_predictions = len(date_range)
-        
-        # Default values for aquaculture features (these are typical averages)
-        # These can be adjusted based on historical data or user input
-        default_values = {
-            'Fingerlings': 5000,  # typical stocking density per pond
-            'SurvivalRate': 85.0,  # percentage - typical survival rate
-            'AvgWeight': 250.0  # grams - typical market weight for tilapia/bangus
-        }
-        
-        # Create dataframe with expected features in the correct order
-        if feature_names is not None:
-            # Create dataframe with features in the exact order the model expects
-            df = pd.DataFrame(index=range(n_predictions))
-            for feature in feature_names:
-                if feature in default_values:
-                    df[feature] = default_values[feature]
-                else:
-                    # For any other features, use 0 as default
-                    df[feature] = 0.0
-        else:
-            # Fallback: create dataframe with the known required features
-            # Order matters! Must match model's expected order: Fingerlings, SurvivalRate, AvgWeight
-            df = pd.DataFrame({
-                'Fingerlings': [default_values['Fingerlings']] * n_predictions,
-                'SurvivalRate': [default_values['SurvivalRate']] * n_predictions,
-                'AvgWeight': [default_values['AvgWeight']] * n_predictions
-            })
-        
-        return df
+
+        if self.label_encoders is None:
+            raise ValueError("Label encoders are not loaded")
+
+        def get_encoder(col: str):
+            direct = self.label_encoders.get(col)
+            if direct is not None:
+                return direct
+            lowered = {str(k).lower(): v for k, v in self.label_encoders.items()}
+            return lowered.get(col.lower())
+
+        def encode_or_reject(col: str, value: str) -> int:
+            encoder = get_encoder(col)
+            if encoder is None:
+                raise ValueError(f"Missing label encoder for {col}")
+
+            classes = getattr(encoder, "classes_", None)
+            first = None
+            if classes is not None and len(classes) > 0:
+                first = classes[0]
+
+            expects_numeric = isinstance(first, (int, float, np.integer, np.floating))
+            if expects_numeric:
+                s = str(value)
+                if not s.isdigit():
+                    raise ValueError(
+                        f"Unknown label for {col}: {value}. "
+                        f"Current encoder expects numeric codes; provide codes or re-save encoders trained on labels."
+                    )
+                try:
+                    code_value = int(s)
+                except Exception as e:
+                    raise ValueError(f"Unknown label for {col}: {value}") from e
+                try:
+                    return int(encoder.transform([code_value])[0])
+                except Exception as e:
+                    raise ValueError(f"Unknown label for {col}: {value}") from e
+
+            try:
+                return int(encoder.transform([value])[0])
+            except Exception as e:
+                raise ValueError(f"Unknown label for {col}: {value}") from e
+
+        encoded_species = encode_or_reject("Species", species)
+        encoded_barangay = encode_or_reject("Barangay", barangay)
+        encoded_municipality = encode_or_reject("Municipality", municipality)
+        encoded_province = encode_or_reject("Province", province)
+
+        df = pd.DataFrame(
+            {
+                "Species": [encoded_species] * n_predictions,
+                "Barangay": [encoded_barangay] * n_predictions,
+                "Municipality": [encoded_municipality] * n_predictions,
+                "Province": [encoded_province] * n_predictions,
+                "Fingerlings": [float(fingerlings)] * n_predictions,
+                "Year": [int(d.year) for d in date_range],
+                "Month": [int(d.month) for d in date_range],
+            }
+        )
+
+        df = df[FEATURE_COLUMNS].astype(float)
+
+        if self.scaler is None:
+            raise ValueError("Scaler is not loaded")
+
+        scaled = self.scaler.transform(df.to_numpy())
+        if scaled.shape != (n_predictions, 7):
+            raise ValueError("Final model input must have shape (n_samples, 7)")
+
+        return pd.DataFrame(scaled, columns=FEATURE_COLUMNS)
 
 
 # Global predictor instance

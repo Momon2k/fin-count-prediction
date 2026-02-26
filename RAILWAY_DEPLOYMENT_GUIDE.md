@@ -2,10 +2,12 @@
 
 ## Quick Fix for Current Error
 
-The deployment error `'$PORT' is not a valid integer` has been fixed by:
-1. ✅ Removed `startCommand` from `railway.toml` (Railway will use Dockerfile CMD)
-2. ✅ Updated Dockerfile CMD to properly handle PORT variable
-3. ✅ Increased health check timeout to 300 seconds
+If your deployment fails with a **Network ▸ Healthcheck failure**, it usually means the app crashed during startup and never became reachable.
+
+Common root causes in this project:
+1. ✅ `ALLOWED_ORIGINS` is set in Railway but is blank or malformed (can crash settings parsing)
+2. ✅ Port binding is incorrect (must listen on `0.0.0.0:$PORT`)
+3. ✅ Healthcheck is probing the wrong port/path
 
 ## Railway Settings Configuration
 
@@ -26,7 +28,7 @@ Leave empty or don't set it - the app will work without database features.
 ```
 ALLOWED_ORIGINS=https://your-frontend-domain.com,https://another-domain.com
 ```
-Replace with your actual frontend URLs (comma-separated).
+Replace with your actual frontend URLs. Accepts comma-separated values or a JSON array string (e.g. `["https://a.com","https://b.com"]`). Avoid leaving it blank; if you don’t need CORS restrictions, delete the variable entirely.
 
 ### 2. **Deploy Settings** (Settings → Deploy)
 
@@ -124,7 +126,9 @@ Expected response:
 **Common causes:**
 - Missing ML model files (`.pkl` files must be in `app/models/`)
 - Database connection issues (set `DATABASE_URL=` to empty if not using)
-- Port binding issues (fixed by our Dockerfile update)
+- Port binding issues (must be `--host 0.0.0.0 --port $PORT`)
+- CORS env parsing issues (remove `ALLOWED_ORIGINS` or set a valid value)
+- ML dependency mismatch with bundled `.pkl` models (fixed by pinning ML deps in Docker build)
 
 ### Issue: Models Not Loading
 

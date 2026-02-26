@@ -154,6 +154,7 @@ In your Railway ML service, update the `ALLOWED_ORIGINS` variable to include you
 ```env
 ALLOWED_ORIGINS=https://your-nextjs-app.railway.app,https://your-nextjs-app.vercel.app
 ```
+You can also set it as a JSON array string (e.g. `["https://a.com","https://b.com"]`). Avoid leaving it blank; if you don’t need CORS restrictions, delete the variable.
 
 ### Step 3: Update Next.js API Route
 
@@ -236,7 +237,7 @@ async function testPrediction() {
 |----------|----------|-------------|---------|
 | `PORT` | No | Server port (Railway sets this automatically) | `8000` |
 | `ENVIRONMENT` | Yes | Environment mode | `production` |
-| `ALLOWED_ORIGINS` | Yes | CORS allowed origins (comma-separated) | `https://app.railway.app` |
+| `ALLOWED_ORIGINS` | No | CORS allowed origins (comma-separated or JSON array) | `https://app.railway.app,https://app.vercel.app` |
 | `MODELS_DIR` | No | Models directory | `models` |
 | `TILAPIA_MODEL_PATH` | No | Tilapia model path | `models/tilapia_forecast_best_model.pkl` |
 | `BANGUS_MODEL_PATH` | No | Bangus model path | `models/bangus_forecast_best_model.pkl` |

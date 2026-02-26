@@ -2,13 +2,14 @@
 FastAPI ML Service - Main Application
 Fish Harvest Forecast API
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, status, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import logging
+from pydantic import ValidationError
 
 from app.config import settings
 from app.models import (
@@ -17,7 +18,8 @@ from app.models import (
     ErrorResponse,
     HealthResponse,
     ModelListResponse,
-    ModelInfo
+    ModelInfo,
+    PredictionMetadata,
 )
 from app.predictor import predictor
 from app.database import init_db, create_tables, get_db, is_db_available
@@ -29,6 +31,11 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def _error_response(status_code: int, error: str, detail: Optional[str] = None) -> JSONResponse:
+    payload = ErrorResponse(error=error, detail=detail).model_dump()
+    return JSONResponse(status_code=status_code, content=payload)
 
 # Create FastAPI app
 app = FastAPI(
@@ -106,7 +113,7 @@ async def health_check():
         status="healthy",
         version=settings.version,
         models_loaded=models_status,
-        timestamp=datetime.utcnow().isoformat() + "Z"
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
 
 
@@ -167,9 +174,10 @@ async def predict_prices(
         
         # Check if model is loaded
         if not predictor.is_model_loaded(request.species):
-            raise HTTPException(
+            return _error_response(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Model for {request.species} is not available"
+                error="Model not available",
+                detail=f"Model for {request.species} is not available",
             )
         
         # Make harvest forecasts
@@ -178,8 +186,17 @@ async def predict_prices(
             date_from=request.date_from,
             date_to=request.date_to,
             province=request.province,
-            city=request.city
+            municipality=request.municipality,
+            barangay=request.barangay,
+            fingerlings=request.fingerlings,
         )
+
+        if len(predictions) == 0:
+            return _error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                error="No predictions available",
+                detail="No data available to generate predictions for the given parameters",
+            )
         
         # Get model info
         model_info_dict = predictor.get_model_info(request.species)
@@ -204,7 +221,7 @@ async def predict_prices(
                     db=db,
                     species=request.species,
                     province=request.province,
-                    city=request.city,
+                    city=request.municipality,
                     date_from=request.date_from,
                     date_to=request.date_to,
                     ip_address=client_ip,
@@ -225,19 +242,23 @@ async def predict_prices(
                 # Continue even if database save fails
         
         # Create response
+        total_fingerlings = float(sum(p.input_features.fingerlings for p in predictions))
+        metadata = PredictionMetadata(
+            species=request.species,
+            province=request.province,
+            city=request.municipality,
+            barangay=request.barangay,
+            date_from=request.date_from,
+            date_to=request.date_to,
+            prediction_count=len(predictions),
+            total_fingerlings=total_fingerlings,
+            request_id=request_id,
+            timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        )
         response = PredictionResponse(
-            success=True,
             predictions=predictions,
             model_info=model_info,
-            metadata={
-                "province": request.province,
-                "city": request.city,
-                "date_from": request.date_from,
-                "date_to": request.date_to,
-                "prediction_count": len(predictions),
-                "request_id": request_id,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
-            }
+            metadata=metadata,
         )
         
         logger.info(f"Harvest forecast successful: {len(predictions)} points generated")
@@ -245,15 +266,24 @@ async def predict_prices(
         
     except ValueError as e:
         logger.error(f"Validation error: {e}")
-        raise HTTPException(
+        return _error_response(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            error="Validation error",
+            detail=str(e),
+        )
+    except ValidationError as e:
+        logger.error(f"Response validation error: {e}")
+        return _error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="Response validation failed",
+            detail="Generated response did not match the API contract",
         )
     except Exception as e:
         logger.error(f"Harvest forecast error: {e}", exc_info=True)
-        raise HTTPException(
+        return _error_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error: {str(e)}"
+            error="Internal server error",
+            detail="An unexpected error occurred",
         )
 
 

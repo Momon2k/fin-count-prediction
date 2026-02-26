@@ -2,6 +2,7 @@
 Configuration management for the ML Service
 """
 import os
+import json
 from typing import List, Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,7 +12,7 @@ class Settings(BaseSettings):
     """Application settings"""
     
     # API Configuration
-    app_name: str = "Fish Price Forecast ML Service"
+    app_name: str = "Fingerlings Forecast ML Service"
     version: str = "1.0.0"
     api_prefix: str = "/api/v1"
     
@@ -26,7 +27,7 @@ class Settings(BaseSettings):
     # CORS Configuration
     allowed_origins: str = Field(
         default="http://localhost:3000,http://localhost:3001,https://*.railway.app,https://*.vercel.app",
-        json_schema_extra={"env": "ALLOWED_ORIGINS"}
+        validation_alias="ALLOWED_ORIGINS"
     )
     
     model_config = SettingsConfigDict(
@@ -40,12 +41,26 @@ class Settings(BaseSettings):
         """Parse CORS origins from comma-separated string"""
         if not self.allowed_origins or self.allowed_origins.strip() == "":
             return ["*"]
-        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
+        raw = self.allowed_origins.strip()
+
+        if raw[0] in ("[", "{"):
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    return [str(origin).strip() for origin in parsed if str(origin).strip()]
+            except json.JSONDecodeError:
+                pass
+
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
     
     # Model Configuration
     models_dir: str = "app/models"
-    tilapia_model_path: str = "app/models/tilapia_forecast_best_model.pkl"
-    bangus_model_path: str = "app/models/bangus_forecast_best_model.pkl"
+    unified_model_path: str = "app/models/unified_model.pkl"
+    label_encoders_path: str = "app/models/label_encoders.pkl"
+    scaler_path: str = "app/models/scaler.pkl"
+    tilapia_model_path: str = ""
+    bangus_model_path: str = ""
     
     # Prediction Configuration
     max_forecast_days: int = 365
