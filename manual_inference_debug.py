@@ -25,12 +25,12 @@ def encode_one(encoders: Dict[str, Any], col: str, raw_value: str) -> int:
 
 
 def main():
+    fingerlings = 5000
     raw = {
         "species": "Bangus",
         "province": "Davao del Norte",
         "city": "Panabo City",
         "barangay": "Malaga",
-        "fingerlings": 5000,
         "dateFrom": "2024-01-01",
         "dateTo": "2024-03-31",
     }
@@ -49,8 +49,9 @@ def main():
     month = start.month
 
     print("\nStep 1) Raw input")
-    for k in ["species", "province", "city", "barangay", "fingerlings", "dateFrom", "dateTo"]:
+    for k in ["species", "province", "city", "barangay", "dateFrom", "dateTo"]:
         print(f"  {k}: {raw[k]}")
+    print(f"  fingerlings: {fingerlings}")
     print("  derived Year:", year)
     print("  derived Month:", month)
 
@@ -70,7 +71,7 @@ def main():
         float(encoded_barangay),
         float(encoded_municipality),
         float(encoded_province),
-        float(raw["fingerlings"]),
+        float(fingerlings),
         float(year),
         float(month),
     ]

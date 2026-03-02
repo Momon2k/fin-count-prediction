@@ -2,7 +2,7 @@
 CRUD operations for database
 """
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, text
 from typing import List, Optional
 from datetime import date, datetime
 import uuid
@@ -89,6 +89,76 @@ def create_predictions(
     db.commit()
     
     return db_predictions
+
+
+def get_distribution_monthly_groups(
+    db: Session,
+    date_from: str,
+    date_to: str,
+    species: str,
+    province: str,
+    city: str,
+    barangay: str,
+) -> List[dict]:
+    params = {"date_from": date_from, "date_to": date_to, "species": species}
+
+    if province != "All Provinces":
+        params["province"] = province
+    if city != "All Cities":
+        params["municipality"] = city
+    if barangay != "All Barangays":
+        params["barangay"] = barangay
+
+    def _execute_for_bucket_date(bucket_date_expr: str):
+        where = [
+            "`deletedAt` IS NULL",
+            f"{bucket_date_expr} BETWEEN :date_from AND :date_to",
+            "`species` = :species",
+        ]
+
+        if province != "All Provinces":
+            where.append("`province` = :province")
+        if city != "All Cities":
+            where.append("`municipality` = :municipality")
+        if barangay != "All Barangays":
+            where.append("`barangay` = :barangay")
+
+        sql = f"""
+            SELECT
+                YEAR({bucket_date_expr}) AS year,
+                MONTH({bucket_date_expr}) AS month,
+                `province` AS province,
+                `municipality` AS municipality,
+                `barangay` AS barangay,
+                SUM(`fingerlings`) AS total_fingerlings,
+                SUM(`actualHarvestKilos`) AS total_harvest,
+                COUNT(`actualHarvestKilos`) AS harvest_count,
+                COUNT(*) AS distribution_count
+            FROM distributions
+            WHERE {" AND ".join(where)}
+            GROUP BY
+                YEAR({bucket_date_expr}),
+                MONTH({bucket_date_expr}),
+                `province`,
+                `municipality`,
+                `barangay`
+            ORDER BY
+                YEAR({bucket_date_expr}),
+                MONTH({bucket_date_expr})
+        """
+
+        return db.execute(text(sql), params)
+
+    try:
+        result = _execute_for_bucket_date("COALESCE(`actualHarvestDate`, `dateDistributed`)")
+    except Exception as e:
+        msg = str(e).lower()
+        if "actualharvestdate" in msg and ("unknown column" in msg or "no such column" in msg):
+            result = _execute_for_bucket_date("`dateDistributed`")
+        else:
+            raise
+
+    return [dict(r) for r in result.mappings().all()]
 
 
 def get_prediction_request(db: Session, request_id: str) -> Optional[PredictionRequest]:

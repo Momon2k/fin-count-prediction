@@ -13,6 +13,7 @@ from pydantic import (
     StrictInt,
     constr,
     field_validator,
+    model_validator,
 )
 
 ISODate = constr(pattern=r"^\d{4}-\d{2}-\d{2}$")
@@ -27,26 +28,37 @@ class PredictionRequest(BaseModel):
     province: constr(min_length=1) = Field(..., description="Province label")
     municipality: constr(min_length=1) = Field(
         ...,
-        validation_alias=AliasChoices("municipality", "city"),
+        alias="city",
+        validation_alias=AliasChoices("city", "municipality"),
         description="Municipality/City label",
     )
     barangay: constr(min_length=1) = Field(..., description="Barangay label")
-    fingerlings: StrictFloat = Field(..., description="Fingerlings count (numeric)")
     
     model_config = ConfigDict(
         populate_by_name=True,
+        extra="ignore",
         json_schema_extra={
             "example": {
                 "species": "tilapia",
                 "dateFrom": "2024-01-01",
                 "dateTo": "2024-01-31",
                 "province": "Pampanga",
-                "municipality": "Mexico",
+                "city": "Mexico",
                 "barangay": "San Roque",
-                "fingerlings": 5000.0,
             }
         },
     )
+
+    @model_validator(mode="after")
+    def validate_location_hierarchy(self):
+        if self.province == "All Provinces":
+            if self.municipality != "All Cities" or self.barangay != "All Barangays":
+                raise ValueError("If province is 'All Provinces', city and barangay must be 'All Cities' and 'All Barangays'")
+
+        if self.municipality == "All Cities" and self.barangay != "All Barangays":
+            raise ValueError("If city is 'All Cities', barangay must be 'All Barangays'")
+
+        return self
     
     @field_validator("date_from", "date_to")
     @classmethod

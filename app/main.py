@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import logging
 from pydantic import ValidationError
+import pandas as pd
 
 from app.config import settings
 from app.models import (
@@ -20,6 +21,8 @@ from app.models import (
     ModelListResponse,
     ModelInfo,
     PredictionMetadata,
+    PredictionPoint,
+    InputFeatures,
 )
 from app.predictor import predictor
 from app.database import init_db, create_tables, get_db, is_db_available
@@ -180,22 +183,103 @@ async def predict_prices(
                 detail=f"Model for {request.species} is not available",
             )
         
-        # Make harvest forecasts
-        predictions = predictor.predict(
-            species=request.species,
+        if not is_db_available() or db is None:
+            return _error_response(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                error="Database not available",
+                detail="Database-driven forecasting requires a configured DATABASE_URL",
+            )
+
+        start_date = datetime.strptime(request.date_from, "%Y-%m-%d")
+        end_date = datetime.strptime(request.date_to, "%Y-%m-%d")
+
+        if end_date < start_date:
+            raise ValueError("End date must be after start date")
+
+        days_diff = (end_date - start_date).days + 1
+        if days_diff > settings.max_forecast_days:
+            raise ValueError(f"Date range exceeds maximum of {settings.max_forecast_days} days")
+
+        groups = crud.get_distribution_monthly_groups(
+            db=db,
             date_from=request.date_from,
             date_to=request.date_to,
+            species=request.species,
             province=request.province,
-            municipality=request.municipality,
+            city=request.municipality,
             barangay=request.barangay,
-            fingerlings=request.fingerlings,
         )
 
-        if len(predictions) == 0:
+        if len(groups) == 0:
             return _error_response(
                 status_code=status.HTTP_404_NOT_FOUND,
-                error="No predictions available",
-                detail="No data available to generate predictions for the given parameters",
+                error="No data available",
+                detail="No distribution records match the given filters and date range",
+            )
+
+        start_month = start_date.replace(day=1)
+        end_month = end_date.replace(day=1)
+        date_range = pd.date_range(start=start_month, end=end_month, freq="MS")
+
+        groups_by_month = {}
+        for r in groups:
+            key = (int(r["year"]), int(r["month"]))
+            groups_by_month.setdefault(key, []).append(r)
+
+        predictions: List[PredictionPoint] = []
+        for date in date_range:
+            year = int(date.year)
+            month = int(date.month)
+            month_rows = groups_by_month.get((year, month), [])
+
+            total_fingerlings = float(sum(float(x.get("total_fingerlings") or 0) for x in month_rows))
+            harvest_count = int(sum(int(x.get("harvest_count") or 0) for x in month_rows))
+            total_harvest = float(
+                sum(float(x.get("total_harvest") or 0) for x in month_rows if x.get("total_harvest") is not None)
+            )
+
+            if harvest_count > 0:
+                predicted_value = total_harvest
+                conf_lower = None
+                conf_upper = None
+            else:
+                predicted_value = 0.0
+                for x in month_rows:
+                    finger = float(x.get("total_fingerlings") or 0)
+                    if finger <= 0:
+                        continue
+                    predicted_value += predictor.predict_single(
+                        species=request.species,
+                        province=str(x["province"]),
+                        municipality=str(x["municipality"]),
+                        barangay=str(x["barangay"]),
+                        fingerlings=finger,
+                        year=year,
+                        month=month,
+                    )
+
+                confidence_margin = predicted_value * 0.15
+                conf_lower = max(0.0, predicted_value - confidence_margin)
+                conf_upper = predicted_value + confidence_margin
+
+            input_features = InputFeatures(
+                species=request.species,
+                barangay=request.barangay,
+                municipality=request.municipality,
+                province=request.province,
+                fingerlings=float(total_fingerlings),
+                year=year,
+                month=month,
+            )
+
+            predictions.append(
+                PredictionPoint(
+                    date=date.strftime("%Y-%m-%d"),
+                    predicted_harvest=float(predicted_value),
+                    input_features=input_features,
+                    confidence_lower=conf_lower,
+                    confidence_upper=conf_upper,
+                )
             )
         
         # Get model info
@@ -210,36 +294,31 @@ async def predict_prices(
         
         # Save to database if available
         request_id = None
-        if is_db_available():
-            try:
-                # Get client info
-                client_ip = http_request.client.host if http_request.client else None
-                user_agent = http_request.headers.get("user-agent")
-                
-                # Create prediction request record
-                db_request = crud.create_prediction_request(
-                    db=db,
-                    species=request.species,
-                    province=request.province,
-                    city=request.municipality,
-                    date_from=request.date_from,
-                    date_to=request.date_to,
-                    ip_address=client_ip,
-                    user_agent=user_agent
-                )
-                request_id = db_request.request_id
-                
-                # Save predictions
-                crud.create_predictions(
-                    db=db,
-                    request_id=request_id,
-                    predictions=predictions
-                )
-                
-                logger.info(f"Harvest forecasts saved to database with request_id: {request_id}")
-            except Exception as db_error:
-                logger.error(f"Failed to save to database: {db_error}")
-                # Continue even if database save fails
+        try:
+            client_ip = http_request.client.host if http_request.client else None
+            user_agent = http_request.headers.get("user-agent")
+
+            db_request = crud.create_prediction_request(
+                db=db,
+                species=request.species,
+                province=request.province,
+                city=request.municipality,
+                date_from=request.date_from,
+                date_to=request.date_to,
+                ip_address=client_ip,
+                user_agent=user_agent
+            )
+            request_id = db_request.request_id
+
+            crud.create_predictions(
+                db=db,
+                request_id=request_id,
+                predictions=predictions
+            )
+
+            logger.info(f"Harvest forecasts saved to database with request_id: {request_id}")
+        except Exception as db_error:
+            logger.error(f"Failed to save to database: {db_error}")
         
         # Create response
         total_fingerlings = float(sum(p.input_features.fingerlings for p in predictions))
@@ -285,6 +364,25 @@ async def predict_prices(
             error="Internal server error",
             detail="An unexpected error occurred",
         )
+
+
+if settings.api_prefix != "/api":
+    @app.post(
+        "/api/predict",
+        response_model=PredictionResponse,
+        responses={
+            400: {"model": ErrorResponse},
+            404: {"model": ErrorResponse},
+            500: {"model": ErrorResponse},
+        },
+        tags=["Predictions"],
+    )
+    async def predict_prices_legacy(
+        request: PredictionRequest,
+        http_request: Request,
+        db: Optional[Session] = Depends(get_db),
+    ):
+        return await predict_prices(request=request, http_request=http_request, db=db)
 
 
 @app.get(

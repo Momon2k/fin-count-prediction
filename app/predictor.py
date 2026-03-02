@@ -373,6 +373,37 @@ class ModelPredictor:
         except Exception as e:
             logger.error(f"Harvest forecast error: {e}")
             raise ValueError(f"Failed to make harvest forecast: {str(e)}")
+
+    def predict_single(
+        self,
+        species: str,
+        province: str,
+        municipality: str,
+        barangay: str,
+        fingerlings: float,
+        year: int,
+        month: int,
+    ) -> float:
+        if self.unified_model is None:
+            raise ValueError("Model is not loaded")
+
+        date_range = pd.DatetimeIndex([datetime(int(year), int(month), 1)])
+        features_df = self._prepare_features(
+            date_range=date_range,
+            province=province,
+            municipality=municipality,
+            barangay=barangay,
+            fingerlings=float(fingerlings),
+            species=species,
+        )
+
+        if list(features_df.columns) != FEATURE_COLUMNS:
+            raise ValueError("Feature columns do not match the training contract")
+        if features_df.shape != (1, 7):
+            raise ValueError("Final model input must have shape (1, 7)")
+
+        prediction = self.unified_model.predict(features_df)
+        return float(prediction[0])
     
     def _prepare_features(
         self,

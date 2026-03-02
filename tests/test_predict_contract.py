@@ -11,6 +11,13 @@ class PredictContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.client = TestClient(app)
+        def override_get_db():
+            yield object()
+        app.dependency_overrides[app_main.get_db] = override_get_db
+
+    @classmethod
+    def tearDownClass(cls):
+        app.dependency_overrides.clear()
 
     def _post_predict(self, payload: dict):
         return self.client.post("/api/v1/predict", json=payload)
@@ -57,30 +64,60 @@ class PredictContractTests(unittest.TestCase):
 
     def test_small_date_range_returns_non_empty_predictions(self):
         payload = {
-            "species": "0",
+            "species": "Bangus",
             "dateFrom": "2024-01-15",
             "dateTo": "2024-01-20",
-            "province": "0",
-            "city": "0",
-            "barangay": "0",
-            "fingerlings": 5000.0,
+            "province": "Davao del Norte",
+            "city": "Panabo City",
+            "barangay": "Malaga",
         }
-        resp = self._post_predict(payload)
+        rows = [
+            {
+                "year": 2024,
+                "month": 1,
+                "province": "Davao del Norte",
+                "municipality": "Panabo City",
+                "barangay": "Malaga",
+                "total_fingerlings": 5000.0,
+                "total_harvest": None,
+                "harvest_count": 0,
+                "distribution_count": 1,
+            }
+        ]
+        with patch.object(app_main, "is_db_available", return_value=True), \
+             patch.object(app_main.crud, "get_distribution_monthly_groups", return_value=rows), \
+             patch.object(app_main.predictor, "predict_single", return_value=123.45):
+            resp = self._post_predict(payload)
         self.assertEqual(resp.status_code, 200)
         body = resp.json()
         self._assert_success_contract(body)
 
     def test_large_date_range_returns_predictions(self):
         payload = {
-            "species": "0",
+            "species": "Bangus",
             "dateFrom": "2024-01-01",
             "dateTo": "2024-12-30",
-            "province": "0",
-            "city": "0",
-            "barangay": "0",
-            "fingerlings": 5000.0,
+            "province": "Davao del Norte",
+            "city": "Panabo City",
+            "barangay": "Malaga",
         }
-        resp = self._post_predict(payload)
+        rows = [
+            {
+                "year": 2024,
+                "month": 1,
+                "province": "Davao del Norte",
+                "municipality": "Panabo City",
+                "barangay": "Malaga",
+                "total_fingerlings": 5000.0,
+                "total_harvest": None,
+                "harvest_count": 0,
+                "distribution_count": 1,
+            }
+        ]
+        with patch.object(app_main, "is_db_available", return_value=True), \
+             patch.object(app_main.crud, "get_distribution_monthly_groups", return_value=rows), \
+             patch.object(app_main.predictor, "predict_single", return_value=123.45):
+            resp = self._post_predict(payload)
         self.assertEqual(resp.status_code, 200)
         body = resp.json()
         self._assert_success_contract(body)
@@ -89,19 +126,34 @@ class PredictContractTests(unittest.TestCase):
         base = {
             "dateFrom": "2024-01-01",
             "dateTo": "2024-03-31",
-            "province": "0",
-            "city": "0",
-            "barangay": "0",
-            "fingerlings": 5000.0,
+            "province": "Davao del Norte",
+            "city": "Panabo City",
+            "barangay": "Malaga",
         }
 
-        resp1 = self._post_predict({**base, "species": "0"})
+        rows = [
+            {
+                "year": 2024,
+                "month": 1,
+                "province": "Davao del Norte",
+                "municipality": "Panabo City",
+                "barangay": "Malaga",
+                "total_fingerlings": 5000.0,
+                "total_harvest": None,
+                "harvest_count": 0,
+                "distribution_count": 1,
+            }
+        ]
+        with patch.object(app_main, "is_db_available", return_value=True), \
+             patch.object(app_main.crud, "get_distribution_monthly_groups", return_value=rows), \
+             patch.object(app_main.predictor, "predict_single", return_value=123.45):
+            resp1 = self._post_predict({**base, "species": "Bangus"})
+            resp2 = self._post_predict({**base, "species": "Red Tilapia"})
         self.assertEqual(resp1.status_code, 200)
         body1 = resp1.json()
         self._assert_success_contract(body1)
         self.assertEqual(body1["model_info"]["species"], "all")
 
-        resp2 = self._post_predict({**base, "species": "1"})
         self.assertEqual(resp2.status_code, 200)
         body2 = resp2.json()
         self._assert_success_contract(body2)
@@ -109,63 +161,92 @@ class PredictContractTests(unittest.TestCase):
 
     def test_province_change_keeps_contract(self):
         payload1 = {
-            "species": "0",
+            "species": "Bangus",
             "dateFrom": "2024-01-01",
             "dateTo": "2024-03-31",
-            "province": "0",
-            "city": "0",
-            "barangay": "0",
-            "fingerlings": 5000.0,
+            "province": "Davao del Norte",
+            "city": "Panabo City",
+            "barangay": "Malaga",
         }
         payload2 = {
-            "species": "0",
+            "species": "Bangus",
             "dateFrom": "2024-01-01",
             "dateTo": "2024-03-31",
-            "province": "1",
-            "city": "1",
-            "barangay": "1",
-            "fingerlings": 5000.0,
+            "province": "Davao del Sur",
+            "city": "Davao City",
+            "barangay": "Buhangin",
         }
 
-        resp1 = self._post_predict(payload1)
+        rows = [
+            {
+                "year": 2024,
+                "month": 1,
+                "province": "Davao del Norte",
+                "municipality": "Panabo City",
+                "barangay": "Malaga",
+                "total_fingerlings": 5000.0,
+                "total_harvest": None,
+                "harvest_count": 0,
+                "distribution_count": 1,
+            }
+        ]
+        with patch.object(app_main, "is_db_available", return_value=True), \
+             patch.object(app_main.crud, "get_distribution_monthly_groups", return_value=rows), \
+             patch.object(app_main.predictor, "predict_single", return_value=123.45):
+            resp1 = self._post_predict(payload1)
+            resp2 = self._post_predict(payload2)
         self.assertEqual(resp1.status_code, 200)
         self._assert_success_contract(resp1.json())
 
-        resp2 = self._post_predict(payload2)
         self.assertEqual(resp2.status_code, 200)
         self._assert_success_contract(resp2.json())
 
     def test_no_data_scenario_returns_error_not_success(self):
         payload = {
-            "species": "0",
+            "species": "Bangus",
             "dateFrom": "2024-01-01",
             "dateTo": "2024-01-31",
-            "province": "0",
-            "city": "0",
-            "barangay": "0",
-            "fingerlings": 5000.0,
+            "province": "Davao del Norte",
+            "city": "Panabo City",
+            "barangay": "Malaga",
         }
 
-        with patch.object(app_main.predictor, "predict", return_value=[]):
+        with patch.object(app_main, "is_db_available", return_value=True), \
+             patch.object(app_main.crud, "get_distribution_monthly_groups", return_value=[]):
             resp = self._post_predict(payload)
-            self.assertEqual(resp.status_code, 404)
-            body = resp.json()
-            self.assertEqual(set(body.keys()), {"success", "error", "detail"})
-            self.assertIs(body["success"], False)
-            self.assertIsInstance(body["error"], str)
+        self.assertEqual(resp.status_code, 404)
+        body = resp.json()
+        self.assertEqual(set(body.keys()), {"success", "error", "detail"})
+        self.assertIs(body["success"], False)
+        self.assertIsInstance(body["error"], str)
 
     def test_unknown_label_returns_error(self):
         payload = {
             "species": "__unknown__",
             "dateFrom": "2024-01-01",
             "dateTo": "2024-01-31",
-            "province": "0",
-            "city": "0",
-            "barangay": "0",
-            "fingerlings": 5000.0,
+            "province": "Davao del Norte",
+            "city": "Panabo City",
+            "barangay": "Malaga",
         }
 
-        resp = self._post_predict(payload)
+        rows = [
+            {
+                "year": 2024,
+                "month": 1,
+                "province": "Davao del Norte",
+                "municipality": "Panabo City",
+                "barangay": "Malaga",
+                "total_fingerlings": 5000.0,
+                "total_harvest": None,
+                "harvest_count": 0,
+                "distribution_count": 1,
+            }
+        ]
+        with patch.object(app_main, "is_db_available", return_value=True), \
+             patch.object(app_main.crud, "get_distribution_monthly_groups", return_value=rows), \
+             patch.object(app_main.predictor, "predict_single", side_effect=ValueError("Unknown label for Species: __unknown__")):
+            resp = self._post_predict(payload)
         self.assertEqual(resp.status_code, 400)
         body = resp.json()
         self.assertEqual(set(body.keys()), {"success", "error", "detail"})
