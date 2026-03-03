@@ -292,6 +292,11 @@ class DbCheckResponse(BaseModel):
     distribution_like_tables: List[str] = Field(default_factory=list, description="Tables matching *distribution*")
     has_distributions_table: bool = Field(..., description="Whether a table named distributions exists")
     distributions_row_count: Optional[int] = Field(None, description="Row count for distributions, if available")
+    distributions_columns: List[str] = Field(default_factory=list, description="Column names for distributions table")
+    missing_required_columns: List[str] = Field(
+        default_factory=list,
+        description="Required columns missing from distributions table",
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -302,6 +307,18 @@ class DbCheckResponse(BaseModel):
                 "distribution_like_tables": ["distributions", "distribution_logs"],
                 "has_distributions_table": True,
                 "distributions_row_count": 12345,
+                "distributions_columns": [
+                    "id",
+                    "deletedAt",
+                    "species",
+                    "dateDistributed",
+                    "fingerlings",
+                    "actualHarvestKilos",
+                    "province",
+                    "municipality",
+                    "barangay",
+                ],
+                "missing_required_columns": [],
             }
         }
     )

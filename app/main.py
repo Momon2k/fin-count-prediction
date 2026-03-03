@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, status, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 import logging
 from pydantic import ValidationError
@@ -159,8 +160,34 @@ async def db_check(
         ]
         has_distributions = any(t.lower() == "distributions" for t in tables)
         distributions_row_count = None
+        distributions_columns: List[str] = []
+        missing_required_columns: List[str] = []
         if has_distributions:
             distributions_row_count = int(db.execute(text("SELECT COUNT(*) FROM distributions")).scalar() or 0)
+            distributions_columns = [
+                str(r[0])
+                for r in db.execute(
+                    text(
+                        """
+                        SELECT COLUMN_NAME
+                        FROM INFORMATION_SCHEMA.COLUMNS
+                        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'distributions'
+                        ORDER BY ORDINAL_POSITION
+                        """
+                    )
+                ).all()
+            ]
+            required = {
+                "deletedAt",
+                "species",
+                "dateDistributed",
+                "fingerlings",
+                "actualHarvestKilos",
+                "province",
+                "municipality",
+                "barangay",
+            }
+            missing_required_columns = sorted([c for c in required if c not in set(distributions_columns)])
 
         return DbCheckResponse(
             database_available=True,
@@ -168,6 +195,8 @@ async def db_check(
             distribution_like_tables=tables,
             has_distributions_table=has_distributions,
             distributions_row_count=distributions_row_count,
+            distributions_columns=distributions_columns,
+            missing_required_columns=missing_required_columns,
         )
     except Exception as e:
         logger.error(f"DB check failed: {e}", exc_info=True)
@@ -258,15 +287,32 @@ async def predict_prices(
         if days_diff > settings.max_forecast_days:
             raise ValueError(f"Date range exceeds maximum of {settings.max_forecast_days} days")
 
-        groups = crud.get_distribution_monthly_groups(
-            db=db,
-            date_from=request.date_from,
-            date_to=request.date_to,
-            species=request.species,
-            province=request.province,
-            city=request.municipality,
-            barangay=request.barangay,
-        )
+        try:
+            groups = crud.get_distribution_monthly_groups(
+                db=db,
+                date_from=request.date_from,
+                date_to=request.date_to,
+                species=request.species,
+                province=request.province,
+                city=request.municipality,
+                barangay=request.barangay,
+            )
+        except OperationalError as e:
+            logger.error(f"Database connection error during forecast: {e}", exc_info=True)
+            return _error_response(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                error="Database connection failed",
+                detail="Database connection failed while running the forecast query",
+            )
+        except ProgrammingError as e:
+            orig = getattr(e, "orig", None)
+            msg = str(orig) if orig is not None else "Database schema/query error"
+            logger.error(f"Database schema/query error during forecast: {msg}", exc_info=True)
+            return _error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                error="Database schema error",
+                detail=msg,
+            )
 
         if len(groups) == 0:
             return _error_response(
