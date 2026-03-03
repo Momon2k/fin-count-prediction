@@ -134,7 +134,7 @@ def get_distribution_monthly_groups(
                 SUM(`actualHarvestKilos`) AS total_harvest,
                 COUNT(`actualHarvestKilos`) AS harvest_count,
                 COUNT(*) AS distribution_count
-            FROM distributions
+            FROM `Distributions`
             WHERE {" AND ".join(where)}
             GROUP BY
                 YEAR({bucket_date_expr}),

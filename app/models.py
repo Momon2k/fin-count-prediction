@@ -292,12 +292,12 @@ class DbCheckResponse(BaseModel):
     databases: List[str] = Field(default_factory=list, description="Databases visible to the DB user")
     tables: List[str] = Field(default_factory=list, description="Tables in the current database")
     distribution_like_tables: List[str] = Field(default_factory=list, description="Tables matching *distribution*")
-    has_distributions_table: bool = Field(..., description="Whether a table named distributions exists")
-    distributions_row_count: Optional[int] = Field(None, description="Row count for distributions, if available")
-    distributions_columns: List[str] = Field(default_factory=list, description="Column names for distributions table")
+    has_distributions_table: bool = Field(..., description="Whether a table named Distributions exists")
+    distributions_row_count: Optional[int] = Field(None, description="Row count for Distributions, if available")
+    distributions_columns: List[str] = Field(default_factory=list, description="Column names for Distributions table")
     missing_required_columns: List[str] = Field(
         default_factory=list,
-        description="Required columns missing from distributions table",
+        description="Required columns missing from Distributions table",
     )
 
     model_config = ConfigDict(
@@ -307,8 +307,8 @@ class DbCheckResponse(BaseModel):
                 "database_available": True,
                 "database_name": "railway",
                 "databases": ["information_schema", "mysql", "performance_schema", "railway"],
-                "tables": ["distributions", "distribution_logs", "prediction_requests", "predictions"],
-                "distribution_like_tables": ["distributions", "distribution_logs"],
+                "tables": ["Distributions", "distribution_logs", "prediction_requests", "predictions"],
+                "distribution_like_tables": ["Distributions", "distribution_logs"],
                 "has_distributions_table": True,
                 "distributions_row_count": 12345,
                 "distributions_columns": [

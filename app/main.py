@@ -152,12 +152,12 @@ async def db_check(
         result = db.execute(text("SHOW TABLES"))
         tables = [str(row[0]) for row in result.all()]
         distribution_like_tables = [t for t in tables if "distribution" in t.lower()]
-        has_distributions = any(t.lower() == "distributions" for t in tables)
+        has_distributions = any(t == "Distributions" for t in tables)
         distributions_row_count = None
         distributions_columns: List[str] = []
         missing_required_columns: List[str] = []
         if has_distributions:
-            distributions_row_count = int(db.execute(text("SELECT COUNT(*) FROM distributions")).scalar() or 0)
+            distributions_row_count = int(db.execute(text("SELECT COUNT(*) FROM `Distributions`")).scalar() or 0)
             distributions_columns = [
                 str(r[0])
                 for r in db.execute(
@@ -165,7 +165,7 @@ async def db_check(
                         """
                         SELECT COLUMN_NAME
                         FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'distributions'
+                        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Distributions'
                         ORDER BY ORDINAL_POSITION
                         """
                     )
