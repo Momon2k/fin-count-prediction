@@ -149,20 +149,9 @@ async def db_check(
             databases = [str(r[0]) for r in db.execute(text("SHOW DATABASES")).all()]
         except Exception:
             databases = []
-        tables = [
-            str(r[0])
-            for r in db.execute(
-                text(
-                    """
-                    SELECT TABLE_NAME
-                    FROM INFORMATION_SCHEMA.TABLES
-                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE :pattern
-                    ORDER BY TABLE_NAME
-                    """
-                ),
-                {"pattern": "%distribution%"},
-            ).all()
-        ]
+        result = db.execute(text("SHOW TABLES"))
+        tables = [str(row[0]) for row in result.all()]
+        distribution_like_tables = [t for t in tables if "distribution" in t.lower()]
         has_distributions = any(t.lower() == "distributions" for t in tables)
         distributions_row_count = None
         distributions_columns: List[str] = []
@@ -198,7 +187,8 @@ async def db_check(
             database_available=True,
             database_name=str(database_name) if database_name is not None else None,
             databases=databases,
-            distribution_like_tables=tables,
+            tables=tables,
+            distribution_like_tables=distribution_like_tables,
             has_distributions_table=has_distributions,
             distributions_row_count=distributions_row_count,
             distributions_columns=distributions_columns,

@@ -290,6 +290,7 @@ class DbCheckResponse(BaseModel):
     database_available: bool = Field(..., description="Whether the app initialized a DB session")
     database_name: Optional[str] = Field(None, description="Current database/schema name")
     databases: List[str] = Field(default_factory=list, description="Databases visible to the DB user")
+    tables: List[str] = Field(default_factory=list, description="Tables in the current database")
     distribution_like_tables: List[str] = Field(default_factory=list, description="Tables matching *distribution*")
     has_distributions_table: bool = Field(..., description="Whether a table named distributions exists")
     distributions_row_count: Optional[int] = Field(None, description="Row count for distributions, if available")
@@ -306,6 +307,7 @@ class DbCheckResponse(BaseModel):
                 "database_available": True,
                 "database_name": "railway",
                 "databases": ["information_schema", "mysql", "performance_schema", "railway"],
+                "tables": ["distributions", "distribution_logs", "prediction_requests", "predictions"],
                 "distribution_like_tables": ["distributions", "distribution_logs"],
                 "has_distributions_table": True,
                 "distributions_row_count": 12345,
