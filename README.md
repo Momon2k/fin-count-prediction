@@ -396,5 +396,5 @@ For issues and questions, please open an issue on GitHub.
 
 ---
 
-Built with Crazy Love
+Built with
  using FastAPI
