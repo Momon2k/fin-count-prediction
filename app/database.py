@@ -37,7 +37,7 @@ def init_db():
             database_url,
             echo=settings.database_echo,
             pool_pre_ping=True,  # Verify connections before using
-            pool_recycle=3600,   # Recycle connections after 1 hour
+            pool_recycle=3600,   # Recycle connections after 1 hour 23 minutes
         )
         
         # Create session factory
