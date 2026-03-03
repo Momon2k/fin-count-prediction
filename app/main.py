@@ -144,6 +144,11 @@ async def db_check(
 
     try:
         database_name = db.execute(text("SELECT DATABASE()")).scalar()
+        databases: List[str] = []
+        try:
+            databases = [str(r[0]) for r in db.execute(text("SHOW DATABASES")).all()]
+        except Exception:
+            databases = []
         tables = [
             str(r[0])
             for r in db.execute(
@@ -192,6 +197,7 @@ async def db_check(
         return DbCheckResponse(
             database_available=True,
             database_name=str(database_name) if database_name is not None else None,
+            databases=databases,
             distribution_like_tables=tables,
             has_distributions_table=has_distributions,
             distributions_row_count=distributions_row_count,
