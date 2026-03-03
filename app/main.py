@@ -7,6 +7,7 @@ from typing import Optional, List
 from fastapi import FastAPI, HTTPException, status, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 import logging
 from pydantic import ValidationError
@@ -23,6 +24,7 @@ from app.models import (
     PredictionMetadata,
     PredictionPoint,
     InputFeatures,
+    DbCheckResponse,
 )
 from app.predictor import predictor
 from app.database import init_db, create_tables, get_db, is_db_available
@@ -118,6 +120,62 @@ async def health_check():
         models_loaded=models_status,
         timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
+
+
+@app.get(
+    f"{settings.api_prefix}/db-check",
+    response_model=DbCheckResponse,
+    responses={
+        500: {"model": ErrorResponse},
+        503: {"model": ErrorResponse},
+    },
+    tags=["Health"],
+)
+async def db_check(
+    db: Optional[Session] = Depends(get_db),
+):
+    if not is_db_available() or db is None:
+        return _error_response(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            error="Database not available",
+            detail="Database-driven forecasting requires a configured DATABASE_URL",
+        )
+
+    try:
+        database_name = db.execute(text("SELECT DATABASE()")).scalar()
+        tables = [
+            str(r[0])
+            for r in db.execute(
+                text(
+                    """
+                    SELECT TABLE_NAME
+                    FROM INFORMATION_SCHEMA.TABLES
+                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE :pattern
+                    ORDER BY TABLE_NAME
+                    """
+                ),
+                {"pattern": "%distribution%"},
+            ).all()
+        ]
+        has_distributions = any(t.lower() == "distributions" for t in tables)
+        distributions_row_count = None
+        if has_distributions:
+            distributions_row_count = int(db.execute(text("SELECT COUNT(*) FROM distributions")).scalar() or 0)
+
+        return DbCheckResponse(
+            database_available=True,
+            database_name=str(database_name) if database_name is not None else None,
+            distribution_like_tables=tables,
+            has_distributions_table=has_distributions,
+            distributions_row_count=distributions_row_count,
+        )
+    except Exception as e:
+        logger.error(f"DB check failed: {e}", exc_info=True)
+        return _error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="Database check failed",
+            detail=str(e),
+        )
 
 
 @app.get(

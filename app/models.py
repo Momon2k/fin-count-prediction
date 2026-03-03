@@ -283,3 +283,25 @@ class ModelListResponse(BaseModel):
             }
         }
     )
+
+
+class DbCheckResponse(BaseModel):
+    success: Literal[True] = Field(True, description="Always true for successful responses")
+    database_available: bool = Field(..., description="Whether the app initialized a DB session")
+    database_name: Optional[str] = Field(None, description="Current database/schema name")
+    distribution_like_tables: List[str] = Field(default_factory=list, description="Tables matching *distribution*")
+    has_distributions_table: bool = Field(..., description="Whether a table named distributions exists")
+    distributions_row_count: Optional[int] = Field(None, description="Row count for distributions, if available")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "database_available": True,
+                "database_name": "railway",
+                "distribution_like_tables": ["distributions", "distribution_logs"],
+                "has_distributions_table": True,
+                "distributions_row_count": 12345,
+            }
+        }
+    )
