@@ -289,6 +289,7 @@ async def predict_prices(
             raise ValueError(f"Date range exceeds maximum allowed range of {max_days} days")
 
         try:
+            data_level_used = "barangay"
             groups = crud.get_distribution_monthly_groups(
                 db=db,
                 date_from=request.date_from,
@@ -298,6 +299,30 @@ async def predict_prices(
                 municipality=request.municipality,
                 barangay=request.barangay,
             )
+
+            if len(groups) == 0 and request.barangay != "All Barangays":
+                groups = crud.get_distribution_monthly_groups(
+                    db=db,
+                    date_from=request.date_from,
+                    date_to=request.date_to,
+                    species=request.species,
+                    province=request.province,
+                    municipality=request.municipality,
+                    barangay="All Barangays",
+                )
+                data_level_used = "municipality"
+
+            if len(groups) == 0 and request.municipality != "All Cities":
+                groups = crud.get_distribution_monthly_groups(
+                    db=db,
+                    date_from=request.date_from,
+                    date_to=request.date_to,
+                    species=request.species,
+                    province=request.province,
+                    municipality="All Cities",
+                    barangay="All Barangays",
+                )
+                data_level_used = "province"
         except OperationalError as e:
             logger.error(f"Database connection error during forecast: {e}", exc_info=True)
             return _error_response(
@@ -319,8 +344,10 @@ async def predict_prices(
             return _error_response(
                 status_code=status.HTTP_404_NOT_FOUND,
                 error="No data available",
-                detail="No distribution records match the given filters and date range",
+                detail="No distribution records available even at province level for the given date range",
             )
+
+        logger.info(f"Prediction using {data_level_used} level data")
 
         start_month = start_date.replace(day=1)
         end_month = end_date.replace(day=1)
