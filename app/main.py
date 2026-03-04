@@ -327,40 +327,37 @@ async def predict_prices(
             groups_by_month.setdefault(key, []).append(r)
 
         predictions: List[PredictionPoint] = []
+        total_actual_harvest = 0.0
         for date in date_range:
             year = int(date.year)
             month = int(date.month)
             month_rows = groups_by_month.get((year, month), [])
 
             total_fingerlings = float(sum(float(x.get("total_fingerlings") or 0) for x in month_rows))
-            harvest_count = int(sum(int(x.get("harvest_count") or 0) for x in month_rows))
             total_harvest = float(
                 sum(float(x.get("total_harvest") or 0) for x in month_rows if x.get("total_harvest") is not None)
             )
+            actual_harvest = float(total_harvest or 0.0)
+            total_actual_harvest += actual_harvest
 
-            if harvest_count > 0:
-                predicted_value = total_harvest
-                conf_lower = None
-                conf_upper = None
-            else:
-                predicted_value = 0.0
-                for x in month_rows:
-                    finger = float(x.get("total_fingerlings") or 0)
-                    if finger <= 0:
-                        continue
-                    predicted_value += predictor.predict_single(
-                        species=request.species,
-                        province=str(x["province"]),
-                        municipality=str(x["municipality"]),
-                        barangay=str(x["barangay"]),
-                        fingerlings=finger,
-                        year=year,
-                        month=month,
-                    )
+            predicted_value = 0.0
+            for x in month_rows:
+                finger = float(x.get("total_fingerlings") or 0)
+                if finger <= 0:
+                    continue
+                predicted_value += predictor.predict_single(
+                    species=request.species,
+                    province=str(x["province"]),
+                    municipality=str(x["municipality"]),
+                    barangay=str(x["barangay"]),
+                    fingerlings=finger,
+                    year=year,
+                    month=month,
+                )
 
-                confidence_margin = predicted_value * 0.15
-                conf_lower = max(0.0, predicted_value - confidence_margin)
-                conf_upper = predicted_value + confidence_margin
+            confidence_margin = predicted_value * 0.15
+            conf_lower = max(0.0, predicted_value - confidence_margin)
+            conf_upper = predicted_value + confidence_margin
 
             input_features = InputFeatures(
                 species=request.species,
@@ -376,6 +373,7 @@ async def predict_prices(
                 PredictionPoint(
                     date=date.strftime("%Y-%m-%d"),
                     predicted_harvest=float(predicted_value),
+                    actual_harvest=float(actual_harvest),
                     input_features=input_features,
                     confidence_lower=conf_lower,
                     confidence_upper=conf_upper,
@@ -431,6 +429,7 @@ async def predict_prices(
             date_to=request.date_to,
             prediction_count=len(predictions),
             total_fingerlings=total_fingerlings,
+            total_actual_harvest=float(total_actual_harvest),
             request_id=request_id,
             timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         )

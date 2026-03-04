@@ -149,14 +149,7 @@ def get_distribution_monthly_groups(
 
         return db.execute(text(sql), params)
 
-    try:
-        result = _execute_for_bucket_date("COALESCE(`actualHarvestDate`, `dateDistributed`)")
-    except Exception as e:
-        msg = str(e).lower()
-        if "actualharvestdate" in msg and ("unknown column" in msg or "no such column" in msg):
-            result = _execute_for_bucket_date("`dateDistributed`")
-        else:
-            raise
+    result = _execute_for_bucket_date("`dateDistributed`")
 
     return [dict(r) for r in result.mappings().all()]
 

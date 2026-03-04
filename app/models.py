@@ -101,6 +101,7 @@ class PredictionPoint(BaseModel):
     
     date: ISODate = Field(..., description="Forecast date (YYYY-MM-DD)")
     predicted_harvest: StrictFloat = Field(..., description="Predicted harvest amount (kg)")
+    actual_harvest: StrictFloat = Field(0.0, description="Actual harvest amount (kg) for the month, if available")
     input_features: InputFeatures = Field(..., description="Input features used for this prediction")
     confidence_lower: Optional[StrictFloat] = Field(None, description="Lower confidence bound")
     confidence_upper: Optional[StrictFloat] = Field(None, description="Upper confidence bound")
@@ -110,6 +111,7 @@ class PredictionPoint(BaseModel):
             "example": {
                 "date": "2024-01-15",
                 "predicted_harvest": 1250.50,
+                "actual_harvest": 1200.00,
                 "input_features": {
                     "species": "tilapia",
                     "barangay": "San Roque",
@@ -165,6 +167,7 @@ class PredictionMetadata(BaseModel):
     date_to: ISODate = Field(..., description="End date (YYYY-MM-DD)")
     prediction_count: StrictInt = Field(..., description="Number of prediction points returned")
     total_fingerlings: StrictFloat = Field(..., description="Sum of fingerlings across predictions")
+    total_actual_harvest: StrictFloat = Field(0.0, description="Sum of actual harvest across prediction months (kg)")
     request_id: Optional[str] = Field(None, description="Database request identifier, if available")
     timestamp: str = Field(..., description="Response generation timestamp (UTC, ISO 8601)")
 
