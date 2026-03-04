@@ -326,6 +326,19 @@ async def predict_prices(
             key = (int(r["year"]), int(r["month"]))
             groups_by_month.setdefault(key, []).append(r)
 
+        avg_fingerlings: Optional[float] = None
+        if request.fingerlings is not None:
+            total_fingerlings_sum = 0.0
+            total_distribution_count = 0.0
+            for r in groups:
+                dist_count = float(r.get("distribution_count") or 0.0)
+                if dist_count <= 0:
+                    continue
+                total_fingerlings_sum += float(r.get("total_fingerlings") or 0.0)
+                total_distribution_count += dist_count
+            if total_distribution_count > 0:
+                avg_fingerlings = total_fingerlings_sum / total_distribution_count
+
         predictions: List[PredictionPoint] = []
         total_actual_harvest = 0.0
         for date in date_range:
@@ -341,30 +354,46 @@ async def predict_prices(
             total_actual_harvest += actual_harvest
 
             predicted_value = 0.0
-            for x in month_rows:
-                finger = float(x.get("total_fingerlings") or 0)
-                if finger <= 0:
-                    continue
-                predicted_value += predictor.predict_single(
+            if request.fingerlings is None:
+                for x in month_rows:
+                    finger = float(x.get("total_fingerlings") or 0)
+                    if finger <= 0:
+                        continue
+                    predicted_value += predictor.predict_single(
+                        species=request.species,
+                        province=str(x["province"]),
+                        municipality=str(x["municipality"]),
+                        barangay=str(x["barangay"]),
+                        fingerlings=finger,
+                        year=year,
+                        month=month,
+                    )
+            else:
+                requested_fingerlings = float(request.fingerlings)
+                base_fingerlings = float(avg_fingerlings) if avg_fingerlings is not None and avg_fingerlings > 0 else requested_fingerlings
+                predicted_value = predictor.predict_single(
                     species=request.species,
-                    province=str(x["province"]),
-                    municipality=str(x["municipality"]),
-                    barangay=str(x["barangay"]),
-                    fingerlings=finger,
+                    province=request.province,
+                    municipality=request.municipality,
+                    barangay=request.barangay,
+                    fingerlings=base_fingerlings,
                     year=year,
                     month=month,
                 )
+                if avg_fingerlings is not None and avg_fingerlings > 0:
+                    predicted_value *= requested_fingerlings / float(avg_fingerlings)
 
             confidence_margin = predicted_value * 0.15
             conf_lower = max(0.0, predicted_value - confidence_margin)
             conf_upper = predicted_value + confidence_margin
 
+            point_fingerlings = float(total_fingerlings) if request.fingerlings is None else float(request.fingerlings)
             input_features = InputFeatures(
                 species=request.species,
                 barangay=request.barangay,
                 municipality=request.municipality,
                 province=request.province,
-                fingerlings=float(total_fingerlings),
+                fingerlings=point_fingerlings,
                 year=year,
                 month=month,
             )
@@ -419,7 +448,9 @@ async def predict_prices(
             logger.error(f"Failed to save to database: {db_error}")
         
         # Create response
-        total_fingerlings = float(sum(p.input_features.fingerlings for p in predictions))
+        total_fingerlings = float(request.fingerlings) if request.fingerlings is not None else float(
+            sum(p.input_features.fingerlings for p in predictions)
+        )
         metadata = PredictionMetadata(
             species=request.species,
             province=request.province,

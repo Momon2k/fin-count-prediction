@@ -33,6 +33,7 @@ class PredictionRequest(BaseModel):
         description="Municipality/City label",
     )
     barangay: constr(min_length=1) = Field(..., description="Barangay label")
+    fingerlings: Optional[StrictInt] = Field(None, description="Optional fingerlings count for single-distribution forecast")
     
     model_config = ConfigDict(
         populate_by_name=True,
