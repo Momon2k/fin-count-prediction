@@ -456,10 +456,27 @@ class ModelPredictor:
                 except Exception as e:
                     raise ValueError(f"Unknown label for {col}: {value}") from e
 
+            raw = str(value).strip()
             try:
-                return int(encoder.transform([value])[0])
-            except Exception as e:
-                raise ValueError(f"Unknown label for {col}: {value}") from e
+                return int(encoder.transform([raw])[0])
+            except Exception:
+                pass
+
+            classes = getattr(encoder, "classes_", None)
+            if classes is not None:
+                class_map = {}
+                for c in classes:
+                    if isinstance(c, str):
+                        class_map[c.strip().casefold()] = c
+                key = raw.casefold()
+                mapped = class_map.get(key)
+                if mapped is not None:
+                    try:
+                        return int(encoder.transform([mapped])[0])
+                    except Exception:
+                        pass
+
+            raise ValueError(f"Unknown label for {col}: {value}")
 
         encoded_species = encode_or_reject("Species", species)
         encoded_barangay = encode_or_reject("Barangay", barangay)
