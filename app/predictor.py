@@ -466,8 +466,20 @@ class ModelPredictor:
             if classes is not None:
                 class_map = {}
                 for c in classes:
+                    key_src = None
                     if isinstance(c, str):
-                        class_map[c.strip().casefold()] = c
+                        key_src = c
+                    elif isinstance(c, (bytes, bytearray)):
+                        try:
+                            key_src = c.decode("utf-8", errors="ignore")
+                        except Exception:
+                            key_src = None
+                    else:
+                        key_src = str(c)
+
+                    if key_src is None:
+                        continue
+                    class_map[str(key_src).strip().casefold()] = c
                 key = raw.casefold()
                 mapped = class_map.get(key)
                 if mapped is not None:
@@ -475,6 +487,15 @@ class ModelPredictor:
                         return int(encoder.transform([mapped])[0])
                     except Exception:
                         pass
+
+                if col == "Species":
+                    candidates = [orig for k, orig in class_map.items() if key in k]
+                    if candidates:
+                        candidates.sort(key=lambda x: len(str(x)))
+                        try:
+                            return int(encoder.transform([candidates[0]])[0])
+                        except Exception:
+                            pass
 
             raise ValueError(f"Unknown label for {col}: {value}")
 
