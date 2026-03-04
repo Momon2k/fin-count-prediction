@@ -279,9 +279,14 @@ async def predict_prices(
         if end_date < start_date:
             raise ValueError("End date must be after start date")
 
-        days_diff = (end_date - start_date).days + 1
-        if days_diff > settings.max_forecast_days:
-            raise ValueError(f"Date range exceeds maximum of {settings.max_forecast_days} days")
+        years_limit = 3 if request.fingerlings is not None else 1
+        try:
+            limit_date = start_date.replace(year=start_date.year + years_limit)
+        except ValueError:
+            limit_date = start_date.replace(year=start_date.year + years_limit, day=28)
+        max_days = int((limit_date - start_date).days)
+        if end_date > limit_date:
+            raise ValueError(f"Date range exceeds maximum allowed range of {max_days} days")
 
         try:
             groups = crud.get_distribution_monthly_groups(
