@@ -290,7 +290,7 @@ async def predict_prices(
                 date_to=request.date_to,
                 species=request.species,
                 province=request.province,
-                city=request.municipality,
+                municipality=request.municipality,
                 barangay=request.barangay,
             )
         except OperationalError as e:

@@ -97,31 +97,31 @@ def get_distribution_monthly_groups(
     date_to: str,
     species: str,
     province: str,
-    city: str,
+    municipality: str,
     barangay: str,
 ) -> List[dict]:
-    params = {"date_from": date_from, "date_to": date_to, "species": species}
+    params = {"dateFrom": date_from, "dateTo": date_to, "species": species}
 
     if province != "All Provinces":
         params["province"] = province
-    if city != "All Cities":
-        params["municipality"] = city
+    if municipality != "All Cities":
+        params["municipality"] = municipality
     if barangay != "All Barangays":
         params["barangay"] = barangay
 
     def _execute_for_bucket_date(bucket_date_expr: str):
         where = [
             "`deletedAt` IS NULL",
-            f"{bucket_date_expr} BETWEEN :date_from AND :date_to",
-            "`species` = :species",
+            "`dateDistributed` BETWEEN :dateFrom AND :dateTo",
+            "LOWER(`species`) LIKE CONCAT('%', LOWER(:species), '%')",
         ]
 
         if province != "All Provinces":
-            where.append("`province` = :province")
-        if city != "All Cities":
-            where.append("`municipality` = :municipality")
+            where.append("LOWER(`province`) = LOWER(:province)")
+        if municipality != "All Cities":
+            where.append("LOWER(`municipality`) = LOWER(:municipality)")
         if barangay != "All Barangays":
-            where.append("`barangay` = :barangay")
+            where.append("LOWER(`barangay`) = LOWER(:barangay)")
 
         sql = f"""
             SELECT
