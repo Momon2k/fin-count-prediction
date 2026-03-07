@@ -154,6 +154,56 @@ def get_distribution_monthly_groups(
     return [dict(r) for r in result.mappings().all()]
 
 
+def get_distributions(
+    db: Session,
+    date_from: str,
+    date_to: str,
+    species: str,
+    province: str,
+    municipality: str,
+    barangay: str,
+) -> List[dict]:
+    params = {"dateFrom": date_from, "dateTo": date_to, "species": species}
+
+    if province != "All Provinces":
+        params["province"] = province
+    if municipality != "All Cities":
+        params["municipality"] = municipality
+    if barangay != "All Barangays":
+        params["barangay"] = barangay
+
+    where = [
+        "`deletedAt` IS NULL",
+        "`dateDistributed` BETWEEN :dateFrom AND :dateTo",
+        "LOWER(`species`) LIKE CONCAT('%', LOWER(:species), '%')",
+    ]
+
+    if province != "All Provinces":
+        where.append("LOWER(`province`) = LOWER(:province)")
+    if municipality != "All Cities":
+        where.append("LOWER(`municipality`) = LOWER(:municipality)")
+    if barangay != "All Barangays":
+        where.append("LOWER(`barangay`) = LOWER(:barangay)")
+
+    sql = f"""
+        SELECT
+            `id` AS id,
+            `fingerlings` AS fingerlings,
+            `actualHarvestKilos` AS actual_harvest_kilos,
+            `species` AS species,
+            `province` AS province,
+            `municipality` AS municipality,
+            `barangay` AS barangay,
+            `dateDistributed` AS date_distributed
+        FROM `Distributions`
+        WHERE {" AND ".join(where)}
+        ORDER BY `dateDistributed` ASC, `id` ASC
+    """
+
+    result = db.execute(text(sql), params)
+    return [dict(r) for r in result.mappings().all()]
+
+
 def get_prediction_request(db: Session, request_id: str) -> Optional[PredictionRequest]:
     """Get a prediction request by ID"""
     return db.query(PredictionRequest).filter(PredictionRequest.request_id == request_id).first()
