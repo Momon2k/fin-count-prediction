@@ -95,12 +95,12 @@ def get_distribution_monthly_groups(
     db: Session,
     date_from: str,
     date_to: str,
-    species: str,
+    species_filter: str,
     province: str,
     municipality: str,
     barangay: str,
 ) -> List[dict]:
-    params = {"dateFrom": date_from, "dateTo": date_to, "species": species}
+    params = {"dateFrom": date_from, "dateTo": date_to, "species_filter": species_filter}
 
     if province != "All Provinces":
         params["province"] = province
@@ -113,7 +113,7 @@ def get_distribution_monthly_groups(
         where = [
             "`deletedAt` IS NULL",
             "`dateDistributed` BETWEEN :dateFrom AND :dateTo",
-            "LOWER(`species`) LIKE CONCAT('%', LOWER(:species), '%')",
+            "LOWER(`species`) LIKE LOWER(:species_filter)",
         ]
 
         if province != "All Provinces":
@@ -158,12 +158,12 @@ def get_distributions(
     db: Session,
     date_from: str,
     date_to: str,
-    species: str,
+    species_filter: str,
     province: str,
     municipality: str,
     barangay: str,
 ) -> List[dict]:
-    params = {"dateFrom": date_from, "dateTo": date_to, "species": species}
+    params = {"dateFrom": date_from, "dateTo": date_to, "species_filter": species_filter}
 
     if province != "All Provinces":
         params["province"] = province
@@ -175,7 +175,7 @@ def get_distributions(
     where = [
         "`deletedAt` IS NULL",
         "`dateDistributed` BETWEEN :dateFrom AND :dateTo",
-        "LOWER(`species`) LIKE CONCAT('%', LOWER(:species), '%')",
+        "LOWER(`species`) LIKE LOWER(:species_filter)",
     ]
 
     if province != "All Provinces":

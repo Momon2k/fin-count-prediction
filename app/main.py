@@ -257,9 +257,20 @@ async def predict_prices(
     """
     try:
         logger.info(f"Harvest forecast request: {request.species} from {request.date_from} to {request.date_to}")
+
+        raw_species = str(request.species or "").lower().strip()
+        if "tilapia" in raw_species:
+            normalized_species = "tilapia"
+            species_filter = "%tilapia%"
+        elif "bangus" in raw_species:
+            normalized_species = "bangus"
+            species_filter = "%bangus%"
+        else:
+            normalized_species = raw_species
+            species_filter = f"%{raw_species}%"
         
         # Check if model is loaded
-        if not predictor.is_model_loaded(request.species):
+        if not predictor.is_model_loaded(normalized_species):
             return _error_response(
                 status_code=status.HTTP_404_NOT_FOUND,
                 error="Model not available",
@@ -294,7 +305,7 @@ async def predict_prices(
                 db=db,
                 date_from=request.date_from,
                 date_to=request.date_to,
-                species=request.species,
+                species_filter=species_filter,
                 province=request.province,
                 municipality=request.municipality,
                 barangay=request.barangay,
@@ -305,7 +316,7 @@ async def predict_prices(
                     db=db,
                     date_from=request.date_from,
                     date_to=request.date_to,
-                    species=request.species,
+                    species_filter=species_filter,
                     province=request.province,
                     municipality=request.municipality,
                     barangay="All Barangays",
@@ -317,7 +328,7 @@ async def predict_prices(
                     db=db,
                     date_from=request.date_from,
                     date_to=request.date_to,
-                    species=request.species,
+                    species_filter=species_filter,
                     province=request.province,
                     municipality="All Cities",
                     barangay="All Barangays",
@@ -372,7 +383,7 @@ async def predict_prices(
             db=db,
             date_from=training_start_str,
             date_to=request.date_to,
-            species=request.species,
+            species_filter=species_filter,
             province=request.province,
             municipality=effective_municipality,
             barangay=effective_barangay,
@@ -392,7 +403,7 @@ async def predict_prices(
                 db=db,
                 date_from=request.date_from,
                 date_to=request.date_to,
-                species=request.species,
+                species_filter=species_filter,
                 province=request.province,
                 municipality=effective_municipality,
                 barangay=effective_barangay,
@@ -448,7 +459,7 @@ async def predict_prices(
                         continue
                     dist_base_fingerlings = base_fingerlings if base_fingerlings is not None else finger
                     dist_predicted = predictor.predict_single(
-                        species=request.species,
+                        species=normalized_species,
                         province=str(dist["province"]),
                         municipality=str(dist["municipality"]),
                         barangay=str(dist["barangay"]),
@@ -458,12 +469,14 @@ async def predict_prices(
                     )
                     if avg_fingerlings is not None and avg_fingerlings > 0:
                         dist_predicted *= finger / float(avg_fingerlings)
+                    if dist_predicted <= 0:
+                        dist_predicted = finger * 0.35
                     predicted_value += float(dist_predicted)
             else:
                 requested_fingerlings = float(request.fingerlings)
                 base_fingerlings = float(avg_fingerlings) if avg_fingerlings is not None and avg_fingerlings > 0 else requested_fingerlings
                 predicted_value = predictor.predict_single(
-                    species=request.species,
+                    species=normalized_species,
                     province=request.province,
                     municipality=request.municipality,
                     barangay=request.barangay,
@@ -473,6 +486,15 @@ async def predict_prices(
                 )
                 if avg_fingerlings is not None and avg_fingerlings > 0:
                     predicted_value *= requested_fingerlings / float(avg_fingerlings)
+                if predicted_value <= 0:
+                    predicted_value = requested_fingerlings * 0.35
+
+            if request.fingerlings is None and predicted_value <= 0:
+                month_distributions = distributions_by_month.get((year, month), [])
+                if month_distributions:
+                    predicted_value = float(
+                        sum(float(d.get("fingerlings") or 0.0) for d in month_distributions) * 0.35
+                    )
 
             confidence_margin = predicted_value * 0.15
             conf_lower = max(0.0, predicted_value - confidence_margin)
@@ -501,7 +523,7 @@ async def predict_prices(
             )
         
         # Get model info
-        model_info_dict = predictor.get_model_info(request.species)
+        model_info_dict = predictor.get_model_info(normalized_species)
         model_info = ModelInfo(
             model_name=model_info_dict['name'],
             species=model_info_dict['species'],
