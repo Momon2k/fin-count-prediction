@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     models_dir: str = "app/models"
     unified_model_path: str = "app/models/unified_model.pkl"
     label_encoders_path: str = "app/models/label_encoders.pkl"
+    categorical_encoder_path: str = "app/models/categorical_encoder.pkl"
     scaler_path: str = "app/models/scaler.pkl"
     tilapia_model_path: str = ""
     bangus_model_path: str = ""

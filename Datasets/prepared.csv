@@ -1,0 +1,370 @@
+Species,Barangay,Municipality,Province,Fingerlings,Year,Month,yield_ratio
+Bangus,Baon,San Isidro,Davao Oriental,17000,2024,6,0.36911764705882355
+Bangus,Malaga,Panabo City,Davao del Norte,25000,2024,6,0.35256
+Bangus,Malaga,Samal Island,Davao del Norte,5000,2024,6,0.3766
+Bangus,Bongbong,Pantukan,Davao de Oro,3000,2024,6,0.3636666666666667
+Bangus,Jp Laurel,Pantukan,Davao de Oro,3000,2024,6,0.36966666666666664
+Bangus,Busaon,Tagum City,Davao del Norte,40000,2024,6,0.370375
+Bangus,Poblacion,Lupon,Davao Oriental,6000,2024,7,0.3531666666666667
+Bangus,Bagumbayan,Lupon,Davao Oriental,6000,2024,7,0.375
+Bangus,Busaon,Tagum City,Davao del Norte,40000,2024,7,0.3545
+Bangus,Poblacion,Lupon,Davao Oriental,21000,2024,7,0.3747142857142857
+Bangus,Lapaz,Carmen,Davao del Norte,3500,2024,8,0.37257142857142855
+Bangus,Malaga,Panabo City,Davao del Norte,35000,2023,10,0.35591428571428574
+Bangus,Malaga,Panabo City,Davao del Norte,35000,2023,10,0.35445714285714286
+Bangus,Busaon,Tagum City,Davao del Norte,30000,2023,10,0.3615
+Bangus,Busaon,Tagum City,Davao del Norte,30000,2023,10,0.3694
+Bangus,Busaon,Tagum City,Davao del Norte,30000,2023,10,0.35806666666666664
+Bangus,Busaon,Tagum City,Davao del Norte,35000,2023,10,0.3736857142857143
+Bangus,Busaon,Tagum City,Davao del Norte,30000,2023,10,0.3617
+Bangus,Liboganon,Tagum City,Davao del Norte,25000,2023,10,0.35764
+Bangus,Liboganon,Tagum City,Davao del Norte,40000,2023,10,0.357525
+Bangus,Liboganon,Tagum City,Davao del Norte,30000,2023,10,0.37196666666666667
+Bangus,Magsaysay,Carmen,Davao del Norte,50000,2023,10,0.36624
+Bangus,Tubod,Carmen,Davao del Norte,30000,2023,10,0.3653
+Bangus,Tubod,Carmen,Davao del Norte,3000,2023,10,0.36766666666666664
+Bangus,Tubod,Carmen,Davao del Norte,10000,2023,10,0.3652
+Bangus,Magsaysay,Carmen,Davao del Norte,8000,2023,10,0.376375
+Bangus,Magsaysay,Carmen,Davao del Norte,5000,2023,10,0.3644
+Bangus,Tubod,Carmen,Davao del Norte,5000,2023,10,0.369
+Bangus,Tubod,Carmen,Davao del Norte,6000,2023,10,0.37616666666666665
+Bangus,Tubod,Carmen,Davao del Norte,6000,2023,10,0.36133333333333334
+Bangus,Magsaysay,Carmen,Davao del Norte,5000,2023,10,0.371
+Bangus,Magsaysay,Carmen,Davao del Norte,6000,2023,10,0.37183333333333335
+Bangus,Magsaysay,Carmen,Davao del Norte,7000,2023,10,0.3648571428571429
+Bangus,Magsaysay,Carmen,Davao del Norte,6500,2023,10,0.35923076923076924
+Bangus,Magsaysay,Carmen,Davao del Norte,5000,2023,10,0.3524
+Bangus,Magsaysay,Carmen,Davao del Norte,6500,2023,10,0.354
+Bangus,Ising,Carmen,Davao del Norte,6000,2023,10,0.35683333333333334
+Bangus,Ising,Carmen,Davao del Norte,10000,2023,10,0.3773
+Bangus,Ising,Carmen,Davao del Norte,8000,2023,10,0.368875
+Bangus,Ising,Carmen,Davao del Norte,2000,2023,10,0.3665
+Bangus,Sto. Niño,Carmen,Davao del Norte,3000,2023,10,0.36733333333333335
+Bangus,Sto. Niño,Carmen,Davao del Norte,3000,2023,10,0.37633333333333335
+Bangus,Sto. Niño,Carmen,Davao del Norte,3000,2023,10,0.36633333333333334
+Bangus,Sto. Niño,Carmen,Davao del Norte,5000,2023,10,0.3736
+Bangus,Sto. Niño,Carmen,Davao del Norte,4000,2023,10,0.36925
+Bangus,Sto. Niño,Carmen,Davao del Norte,10000,2023,10,0.3646
+Bangus,Tubod,Carmen,Davao del Norte,18600,2023,10,0.35274193548387095
+Bangus,Tibagon,Pantukan,Davao de Oro,6000,2023,10,0.35833333333333334
+Bangus,Tibagon,Pantukan,Davao de Oro,5000,2023,10,0.362
+Bangus,Tibagon,Pantukan,Davao de Oro,3000,2023,10,0.36633333333333334
+Bangus,Tibagon,Pantukan,Davao de Oro,3000,2023,10,0.36966666666666664
+Bangus,Tibagon,Pantukan,Davao de Oro,3000,2023,10,0.36233333333333334
+Bangus,Tibagon,Pantukan,Davao de Oro,6000,2023,10,0.36133333333333334
+Bangus,Tibagon,Pantukan,Davao de Oro,40000,2023,10,0.351025
+Bangus,Tibagon,Pantukan,Davao de Oro,40000,2023,10,0.358075
+Bangus,Magnaga,Pantukan,Davao de Oro,3000,2023,10,0.35933333333333334
+Bangus,Magnaga,Pantukan,Davao de Oro,3000,2023,10,0.375
+Bangus,Magnaga,Pantukan,Davao de Oro,3000,2023,10,0.3546666666666667
+Bangus,Magnaga,Pantukan,Davao de Oro,5000,2023,10,0.3596
+Bangus,Calubihan,Banaybanay,Davao Oriental,30000,2023,10,0.35173333333333334
+Bangus,Caganganan,Banaybanay,Davao Oriental,30000,2023,10,0.3571666666666667
+Bangus,Calubihan,Banaybanay,Davao Oriental,30000,2023,10,0.3741333333333333
+Bangus,Caganganan,Banaybanay,Davao Oriental,33400,2023,10,0.3539520958083832
+Bangus,Marilog,Davao City,Davao del Sur,8000,2023,10,0.35375
+Bangus,Bagumbayan,Lupon,Davao Oriental,30000,2023,12,0.378
+Bangus,Bagumbayan,Lupon ,Davao Oriental,30000,2023,12,0.3631333333333333
+Bangus,Liboganon,Tagum City,Davao del Norte,50000,2023,12,0.36694
+Bangus,Liboganon,Tagum City,Davao del Norte,50000,2023,12,0.35276
+Bangus,Liboganon,Tagum City,Davao del Norte,35000,2023,12,0.37211428571428573
+Bangus,Baguhin,Cagwait,Surigao del Sur,30000,2023,12,0.37183333333333335
+Bangus,Baguhin,Cagwait,Surigao del Sur,50000,2023,12,0.3675
+Bangus,Baguhin,Cagwait,Surigao del Sur,50000,2023,12,0.36124
+Bangus,Bongbong,Pantukan,Davao de Oro,50000,2023,12,0.3777
+Bangus,Madaum,Tagum City,Davao del Norte,50000,2023,12,0.3683
+Bangus,Banza,Gigaquit,Surigao del Sur,50000,2023,12,0.36566
+Bangus,Marilog,Davao City,Davao del Sur,2000,2023,12,0.3625
+Tilapia,Tubod,Carmen,Davao del Norte,3000,2023,1,0.194
+Tilapia,Bobongon,Sto Thomas,Davao del Norte,2000,2023,1,0.1975
+Tilapia,Baybay,Malalag,Davao del Sur,3000,2023,1,0.198
+Tilapia,Mangalcal,Carmen,Davao del Norte,1000,2023,2,0.188
+Tilapia,San Vicente,Panabo City,Davao del Norte,2000,2023,2,0.1905
+Tilapia,Sto. Niño,Panabo City,Davao del Norte,1000,2023,2,0.196
+Tilapia,Cagangohan,Panabo City,Davao del Norte,10900,2023,2,0.18935779816513762
+Tilapia,Anibongan,Maco,Davao de Oro,21000,2023,2,0.1929047619047619
+Tilapia,Tubod,Carmen,Davao del Norte,1000,2023,2,0.188
+Tilapia,New Pandan,Panabo City,Davao del Norte,1000,2023,2,0.195
+Tilapia,Southern Davao,Panabo City,Davao del Norte,1000,2023,2,0.198
+Tilapia,Paradise Embac,Davao City,Davao del Sur,250,2023,2,0.192
+Tilapia,San Roque,New Corella,Davao del Norte,350,2023,2,0.18571428571428572
+Tilapia,Paradise Embac,Davao City,Davao del Sur,200,2023,2,0.19
+Tilapia,New Visayas,Panabo City,Davao del Norte,1500,2023,2,0.19866666666666666
+Tilapia,Buhangin,Davao City,Davao del Sur,2000,2023,2,0.1935
+Tilapia,New Visayas,Panabo City,Davao del Norte,2500,2023,2,0.1892
+Tilapia,Bigaan,Hinatuan,Surigao del Sur,5000,2023,2,0.1964
+Tilapia,Basak,Nabunturan,Davao de Oro,200,2023,2,0.195
+Tilapia,Tubod,Carmen,Davao del Norte,1000,2023,2,0.188
+Tilapia,Busaon,Tagum City,Davao del Norte,2000,2023,3,0.1935
+Tilapia,Sibagat,Butuan City,Agusan del Sur,40000,2023,3,0.189675
+Tilapia,Southern Davao,Panabo City,Davao del Norte,3000,2023,4,0.18866666666666668
+Tilapia,Southern Davao,Panabo City,Davao del Norte,5000,2023,4,0.1952
+Tilapia,Southern Davao,Panabo City,Davao del Norte,2000,2023,4,0.1935
+Tilapia,Bulahan,Sto Thomas,Davao del Norte,5000,2023,4,0.188
+Tilapia,Poblacion,Compostela,Davao de Oro,1000,2023,4,0.199
+Tilapia,Quezon,Panabo City,Davao del Norte,1000,2023,4,0.198
+Tilapia,Mabunao,Carmen,Davao del Norte,15000,2023,4,0.19893333333333332
+Tilapia,Busaon,Tagum City,Davao del Norte,5000,2023,4,0.1884
+Tilapia,Licanan,Panabo City,Davao del Norte,5000,2023,4,0.1946
+Tilapia,Sto. Niño,Panabo City,Davao del Norte,1000,2023,4,0.192
+Tilapia,Southern Davao,Panabo City,Davao del Norte,1000,2023,4,0.191
+Tilapia,Magsaysay,Nabunturan,Davao de Oro,6000,2023,4,0.194
+Tilapia,Camiling,Panabo City,Davao del Norte,500,2023,4,0.196
+Tilapia,Nanyo,Panabo City,Davao del Norte,2500,2023,5,0.1964
+Tilapia,Nanyo,Panabo City,Davao del Norte,2500,2023,5,0.196
+Tilapia,Calinan,Panabo City,Davao del Norte,5000,2023,5,0.19
+Tilapia,New Malitbog,Panabo City,Davao del Norte,500,2023,5,0.188
+Tilapia,New Malitbog,Panabo City,Davao del Norte,1500,2023,5,0.192
+Tilapia,Cagangohan,Panabo City,Davao del Norte,7500,2023,6,0.19373333333333334
+Tilapia,New Malitbog,Panabo City,Davao del Norte,3000,2023,6,0.198
+Tilapia,New Malitbog,Panabo City,Davao del Norte,3000,2023,6,0.19766666666666666
+Tilapia,Manay,Panabo City,Davao del Norte,5000,2023,6,0.1932
+Tilapia,Cagangohan,Panabo City,Davao del Norte,35000,2023,6,0.1898857142857143
+Tilapia,Buan,Asuncion,Surigao del Sur,5000,2023,6,0.1914
+Tilapia,Cagangohan,Panabo City,Davao del Norte,5000,2023,7,0.1966
+Tilapia,Mangalkal,Carmen,Davao del Norte,15000,2023,7,0.19173333333333334
+Tilapia,Datu Abdul,Panabo City,Davao del Norte,500,2023,7,0.19
+Tilapia,Mangalkal,Carmen,Davao del Norte,500,2023,7,0.194
+Tilapia,Tubod,Carmen,Davao del Norte,2000,2023,7,0.189
+Tilapia,Tubod,Carmen,Davao del Norte,2000,2023,7,0.194
+Tilapia,Amas,Kidapawan,Cotabato,1500,2023,7,0.192
+Tilapia,Malitbog,Panabo City,Davao del Norte,2500,2023,7,0.1912
+Tilapia,Tubod,Carmen,Davao del Norte,4000,2023,7,0.19325
+Tilapia,Calinan,Davao City,Davao del Sur,2000,2023,7,0.189
+Tilapia,Quilisando,Panabo City,Davao del Norte,3000,2023,7,0.196
+Tilapia,Malitbog,Panabo City,Davao del Norte,1000,2023,7,0.19
+Tilapia,Malitbog,Panabo City,Davao del Norte,2000,2023,7,0.1925
+Tilapia,Magsaysay,Nabunturan,Davao de Oro,17000,2023,7,0.19929411764705882
+Tilapia,Malitbog,Panabo City,Davao del Norte,1000,2023,7,0.195
+Tilapia,Southern Davao,Panabo City,Davao del Norte,1000,2023,7,0.198
+Tilapia,Malitbog,Panabo City,Davao del Norte,1000,2023,7,0.188
+Tilapia,Malitbog,Panabo City,Davao del Norte,2000,2023,7,0.188
+Tilapia,Buan,Asuncion,Davao del Norte,15000,2023,7,0.19446666666666668
+Tilapia,Southern Davao,Panabo City,Davao del Norte,6000,2023,7,0.19183333333333333
+Tilapia,Tubod,Carmen,Davao del Norte,5000,2023,7,0.1976
+Tilapia,Southern Davao,Panabo City,Davao del Norte,4500,2023,7,0.19244444444444445
+Tilapia,Sto. Niño,Carmen,Davao del Norte,6000,2023,7,0.199
+Tilapia,Southern Davao,Panabo City,Davao del Norte,5500,2023,8,0.18981818181818183
+Tilapia,Southern Davao,Panabo City,Davao del Norte,3000,2023,8,0.197
+Tilapia,Umoy,Davao City,Davao del Sur,1000,2023,8,0.197
+Tilapia,Mankilam,Tagum City,Davao del Norte,20000,2023,8,0.19305
+Tilapia,Bulahan,Sto Thomas,Davao del Norte,15000,2023,8,0.1978
+Tilapia,Anonang,Samal Island,Davao del Norte,30000,2023,9,0.1952
+Tilapia,Bahi,Maragusan,Davao de Oro,20000,2023,9,0.1911
+Tilapia,Carcor,New Corella,Davao del Norte,30000,2023,9,0.1916
+Tilapia,Semong,Kapalong,Davao del Norte,12000,2023,9,0.18783333333333332
+Tilapia,Apokon,Tagum City,Davao del Norte,30000,2023,9,0.19706666666666667
+Tilapia,Tubod,Carmen,Davao del Norte,1000,2023,10,0.197
+Tilapia,Tubod,Carmen,Davao del Norte,2000,2023,10,0.189
+Tilapia,Camiling,Panabo City,Davao del Norte,15000,2023,10,0.19953333333333334
+Tilapia,Tubod,Carmen,Davao del Norte,3000,2023,10,0.188
+Tilapia,Apokon,Tagum City,Davao del Norte,3000,2023,10,0.18766666666666668
+Tilapia,Dujali,Tagum City,Davao del Norte,3000,2023,10,0.192
+Tilapia,Mangalkal,Carmen,Davao del Norte,3000,2023,10,0.19666666666666666
+Tilapia,New Visayas,Panabo City,Davao del Norte,100,2023,10,0.18
+Tilapia,Camiling,Panabo City,Davao del Norte,3000,2023,10,0.19666666666666666
+Tilapia,Tubod,Carmen,Davao del Norte,2000,2023,11,0.197
+Tilapia,Apokon,Tagum City,Davao del Norte,2000,2023,11,0.1985
+Tilapia,Southern Davao,Panabo City,Davao del Norte,8000,2023,11,0.190375
+Tilapia,Babongon,Sto Thomas,Davao del Norte,5000,2023,11,0.193
+Tilapia,Busaon,Tagum City,Davao del Norte,5000,2023,11,0.1988
+Tilapia,New Visayas,Panabo City,Davao del Norte,500,2023,11,0.188
+Tilapia,New Visayas,Panabo City,Davao del Norte,2000,2023,12,0.1945
+Tilapia,Babongon,Sto Thomas,Davao del Norte,50000,2023,12,0.19984
+Tilapia,Apokon,Tagum City,Davao del Norte,2000,2023,12,0.198
+Tilapia,Salvacion,Panabo City,Davao del Norte,2000,2023,12,0.1935
+Tilapia,Salvacion,Panabo City,Davao del Norte,2000,2023,12,0.194
+Tilapia,Southern Davao,Panabo City,Davao del Norte,1000,2024,1,0.19
+Tilapia,San Pedro,Panabo City,Davao del Norte,2000,2024,1,0.1995
+Tilapia,Busaon,Tagum City,Davao del Norte,1000,2024,1,0.199
+Tilapia,Ganayon,Lianga,Surigao del Sur,2000,2024,1,0.1975
+Tilapia,Sindaton,Panabo City,Davao del Norte,1000,2024,1,0.188
+Tilapia,New Visayas,Panabo City,Davao del Norte,2000,2024,1,0.197
+Tilapia,Southern Davao,Panabo City,Davao del Norte,2000,2024,1,0.193
+Tilapia,JP Laurel,Panabo City,Davao del Norte,1000,2024,1,0.197
+Tilapia,Bucal,Nabunturan,Davao de Oro,5000,2024,1,0.197
+Tilapia,Balabag,Digos City,Davao del Sur,80000,2024,2,0.1984
+Tilapia,Cagangohan,Panabo City,Davao del Norte,5750,2024,2,0.19756521739130434
+Tilapia,New Visayas,Panabo City,Davao del Norte,3500,2024,2,0.19314285714285714
+Tilapia,New Pandan,Panabo City,Davao del Norte,5000,2024,2,0.1946
+Tilapia,Canucotan,Tagum City,Davao del Norte,1000,2024,2,0.193
+Tilapia,Magsaysay,Carmen,Davao del Norte,3000,2024,2,0.195
+Tilapia,Bingcungan,Tagum City,Davao del Norte,5000,2024,3,0.1992
+Tilapia,Tubod,Carmen,Davao del Norte,100,2024,3,0.19
+Tilapia,Marilog,Davao City,Davao del Sur,4000,2024,3,0.19575
+Tilapia,New Malitbog,Panabo City,Davao del Norte,3000,2024,3,0.19933333333333333
+Tilapia,Southern Davao,Panabo City,Davao del Norte,2000,2024,3,0.197
+Tilapia,Busaon,Tagum City,Davao del Norte,3000,2024,3,0.199
+Tilapia,Tubod,Carmen,Davao del Norte,2000,2024,3,0.1985
+Tilapia,San Nicolas,Panabo City,Davao del Norte,500,2024,3,0.198
+Tilapia,Dujali,Panabo City,Davao del Norte,40000,2024,3,0.188375
+Tilapia,Quezon,Panabo City,Davao del Norte,2000,2024,3,0.194
+Tilapia,Malativas,Panabo City,Davao del Norte,2000,2024,3,0.1965
+Tilapia,Tubod,Panabo City,Davao del Norte,2000,2024,3,0.199
+Tilapia,Tubod,Carmen,Davao del Norte,15000,2024,4,0.1886
+Tilapia,Tubod,Carmen,Davao del Norte,150,2024,4,0.18666666666666668
+Tilapia,Balayunan,Sto Thomas,Davao del Norte,2000,2024,4,0.1985
+Tilapia,Balayunan,Sto Thomas,Davao del Norte,2000,2024,4,0.196
+Tilapia,Southern Davao,Panabo City,Davao del Norte,2000,2024,4,0.189
+Tilapia,Lower Panaga,Panabo City,Davao del Norte,20000,2024,4,0.19295
+Tilapia,Southern Davao,Panabo City,Davao del Norte,5000,2024,4,0.1982
+Tilapia,Kimamon,Sto Thomas,Davao del Norte,25000,2024,4,0.19072
+Tilapia,Kasilak,Panabo City,Davao del Norte,4400,2024,4,0.1915909090909091
+Tilapia,Kimamon,Sto Thomas,Davao del Norte,20000,2024,5,0.19865
+Tilapia,Libra Tambongon,Davao City,Davao del Sur,2000,2024,5,0.1965
+Tilapia,Babongon,Sto Thomas,Davao del Norte,3000,2024,5,0.19866666666666666
+Tilapia,Adnap,Laak,Davao de Oro,1500,2024,5,0.18933333333333333
+Tilapia,Balogo,Pigkawayan,Cotabato,1500,2024,5,0.19333333333333333
+Tilapia,Southern Davao,Panabo City,Davao del Norte,500,2024,5,0.198
+Tilapia,Anitap,Governor Generoso,Davao Oriental,30000,2024,5,0.19936666666666666
+Tilapia,Lavigan,Governor Generoso,Davao Oriental,2000,2024,5,0.197
+Tilapia,Homeland,Panabo City,Davao del Norte,10000,2024,6,0.1997
+Tilapia,New Visayas,Panabo City,Davao del Norte,10000,2024,6,0.1917
+Tilapia,Cagangohan,Panabo City,Davao del Norte,5700,2024,6,0.19789473684210526
+Tilapia,Tubod,Carmen,Davao del Norte,1500,2024,6,0.19866666666666666
+Tilapia,Salvacion,Panabo City,Davao del Norte,5000,2024,6,0.1896
+Tilapia,Little Panay,Panabo City,Davao del Norte,1000,2024,6,0.199
+Tilapia,Katipunan,Nabunturan,Davao de Oro,2500,2024,6,0.1972
+Tilapia,Babongon,Sto Thomas,Davao del Norte,15000,2024,6,0.19766666666666666
+Tilapia,Lower Panaga,Panabo City,Davao del Norte,2050,2024,6,0.19853658536585367
+Tilapia,Nanyo,Panabo City,Davao del Norte,500,2024,6,0.2
+Tilapia,New Visayas,Panabo City,Davao del Norte,15000,2024,6,0.19646666666666668
+Tilapia,Camiling,Panabo City,Davao del Norte,10000,2024,6,0.1984
+Tilapia,Mabunao,Panabo City,Davao del Norte,20000,2024,7,0.19115
+Tilapia,Sto. Nino,Panabo City,Davao del Norte,3000,2024,7,0.19533333333333333
+Tilapia,Salvacion,Panabo City,Davao del Norte,40000,2024,7,0.197975
+Tilapia,Cagangohan,Panabo City,Davao del Norte,5000,2024,7,0.1922
+Tilapia,Suwawon,Tagum City,Davao del Norte,3000,2024,8,0.19066666666666668
+Tilapia,Malitbog,Sto Thomas,Davao del Norte,10000,2024,8,0.1886
+Tilapia,Malitbog,Sto Thomas,Davao del Norte,45000,2024,8,0.19957777777777777
+Tilapia,Ising,Carmen,Davao del Norte,4000,2024,8,0.19525
+Tilapia,Sto. Niño,Carmen,Davao del Norte,5000,2024,8,0.189
+Tilapia,Sto. Niño,Carmen,Davao del Norte,5000,2024,8,0.1906
+Tilapia,Sto. Niño,Carmen,Davao del Norte,5000,2024,9,0.1976
+Tilapia,Ising,Carmen,Davao del Norte,15000,2024,9,0.1898
+Tilapia,Ising,Carmen,Davao del Norte,10000,2024,9,0.1974
+Tilapia,Magsaysay,Nabunturan,Davao de Oro,5000,2024,10,0.1892
+Tilapia,Malitbog,Sto Thomas,Davao del Norte,10000,2024,10,0.1905
+Tilapia,Malitbog,Sto Thomas,Davao del Norte,30000,2024,10,0.19883333333333333
+Tilapia,Southern Davao,Panabo City,Davao del Norte,5000,2024,10,0.1896
+Tilapia,Malitbog,Sto Thomas,Davao del Norte,30000,2024,10,0.19823333333333334
+Tilapia,Sto. Nino,Carmen,Davao del Norte,2500,2024,10,0.1872
+Tilapia,Ising,Carmen,Davao del Norte,1000,2024,10,0.197
+Tilapia,Cagangohan,Panabo City,Davao del Norte,3000,2024,10,0.19433333333333333
+Tilapia,Del Pilar,New Corella,Davao del Norte,30000,2024,11,0.19036666666666666
+Tilapia,Mangloy,Laak,Davao de Oro,3500,2024,11,0.18885714285714286
+Tilapia,Mesaoy,New Corella,Davao del Norte,50000,2024,11,0.19408
+Tilapia,Del Pilar,New Corella,Davao del Norte,1000,2024,11,0.195
+Tilapia,Busdi,Malabalay City,Bukidnon,300,2024,11,0.19333333333333333
+Tilapia,Mesaoy,New Corella,Davao del Norte,10000,2024,12,0.1911
+Tilapia,Gredu,Panabo City,Davao del Norte,150,2025,1,0.19333333333333333
+Tilapia,Buhangin,Davao City,Davao del Sur,1500,2025,1,0.19133333333333333
+Tilapia,Gamao,Panabo City,Davao del Norte,5000,2025,1,0.1906
+Tilapia,San Nicolas,Panabo City,Davao del Norte,5000,2025,1,0.1996
+Tilapia,JP Laurel,Panabo City,Davao del Norte,4000,2025,1,0.19225
+Tilapia,Tubod,Panabo City,Davao del Norte,2000,2025,1,0.1975
+Tilapia,Gredu,Panabo City,Davao del Norte,5500,2025,1,0.19527272727272726
+Tilapia,Pagro,Panabo City,Davao del Norte,5000,2025,1,0.1934
+Tilapia,Ising,Carmen,Davao del Norte,50,2025,1,0.18
+Tilapia,Arguelles,Panabo City,Davao del Norte,4000,2025,1,0.19575
+Tilapia,Maduao,Panabo City,Davao del Norte,3000,2025,1,0.19566666666666666
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.194
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.192
+Tilapia,New Loon,Asuncion,Davao del Norte,800,2025,1,0.18875
+Tilapia,San Vicente,Asuncion,Davao del Norte,2800,2025,1,0.19535714285714287
+Tilapia,New Loon,Asuncion,Davao del Norte,650,2025,1,0.18923076923076923
+Tilapia,New Loon,Asuncion,Davao del Norte,800,2025,1,0.195
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.198
+Tilapia,Camoning,Asuncion,Davao del Norte,650,2025,1,0.19384615384615383
+Tilapia,Camoning,Asuncion,Davao del Norte,850,2025,1,0.1976470588235294
+Tilapia,New Loon,Asuncion,Davao del Norte,500,2025,1,0.19
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.198
+Tilapia,New Santiago,Asuncion,Davao del Norte,850,2025,1,0.1988235294117647
+Tilapia,New Loon,Asuncion,Davao del Norte,600,2025,1,0.19
+Tilapia,Magastos,Asuncion,Davao del Norte,200,2025,1,0.19
+Tilapia,New Loon,Asuncion,Davao del Norte,500,2025,1,0.188
+Tilapia,New Loon,Asuncion,Davao del Norte,500,2025,1,0.198
+Tilapia,New Loon,Asuncion,Davao del Norte,850,2025,1,0.19058823529411764
+Tilapia,New Loon,Asuncion,Davao del Norte,500,2025,1,0.19
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.196
+Tilapia,Camoning,Asuncion,Davao del Norte,1700,2025,1,0.19294117647058823
+Tilapia,Camoning,Asuncion,Davao del Norte,2500,2025,1,0.196
+Tilapia,Camoning,Asuncion,Davao del Norte,850,2025,1,0.19647058823529412
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.19
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.198
+Tilapia,Camoning,Asuncion,Davao del Norte,700,2025,1,0.19285714285714287
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.188
+Tilapia,Camoning,Asuncion,Davao del Norte,750,2025,1,0.19466666666666665
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.198
+Tilapia,Camoning,Asuncion,Davao del Norte,250,2025,1,0.188
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.192
+Tilapia,Camoning,Asuncion,Davao del Norte,600,2025,1,0.19
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.188
+Tilapia,Camoning,Asuncion,Davao del Norte,500,2025,1,0.194
+Tilapia,Camoning,Asuncion,Davao del Norte,1200,2025,1,0.19916666666666666
+Tilapia,Camoning,Asuncion,Davao del Norte,750,2025,1,0.19333333333333333
+Tilapia,Pag-asa,Asuncion,Davao del Norte,500,2025,1,0.194
+Tilapia,Magsagana,Asuncion,Davao del Norte,800,2025,1,0.18875
+Tilapia,Magsagana,Asuncion,Davao del Norte,500,2025,1,0.194
+Tilapia,Magsagana,Asuncion,Davao del Norte,800,2025,1,0.19875
+Tilapia,Magsagana,Asuncion,Davao del Norte,500,2025,1,0.194
+Tilapia,Magsagana,Asuncion,Davao del Norte,500,2025,1,0.19
+Tilapia,Libra Tambongon,Davao City,Davao del Sur,6500,2025,1,0.19707692307692307
+Tilapia,Dapco Farm 2,Panabo City,Davao del Norte,1500,2025,1,0.194
+Tilapia,Mabuhay,Carmen,Davao del Norte,1000,2025,1,0.189
+Tilapia,Nangka,Panabo City,Davao del Norte,1000,2025,2,0.192
+Tilapia,New Visayas,Panabo City,Davao del Norte,100,2025,2,0.19
+Tilapia,Ising,Carmen,Davao del Norte,15000,2025,2,0.1944
+Tilapia,Southern Davao,Panabo City,Davao del Norte,200,2025,2,0.195
+Tilapia,San Fransisco,Panabo City,Davao del Norte,6000,2025,2,0.1985
+Tilapia,Busaon,Tagum City,Davao del Norte,5000,2025,2,0.197
+Tilapia,Sasa,Davao City,Davao del Sur,5000,2025,2,0.1904
+Tilapia,New Visayas,Panabo City,Davao del Norte,350,2025,2,0.19428571428571428
+Tilapia,New Visayas,Sto Thomas,Davao del Norte,10000,2025,2,0.1927
+Tilapia,San Vicente,Panabo City,Davao del Norte,2500,2025,2,0.1984
+Tilapia,Southern Davao,Panabo City,Davao del Norte,500,2025,2,0.198
+Tilapia,Southern Davao,Panabo City,Davao del Norte,1000,2025,2,0.194
+Tilapia,New Bohol,New Corella,Davao del Norte,2000,2025,2,0.199
+Tilapia,Sampao,Kapalong,Davao del Norte,2500,2025,2,0.1876
+Tilapia,Maniki,Kapalong,Davao del Norte,2500,2025,2,0.1992
+Tilapia,Sampao,Kapalong,Davao del Norte,2500,2025,2,0.192
+Tilapia,Lumiad,Davao City,Davao del Sur,2000,2025,3,0.1905
+Tilapia,Nanyo,Panabo City,Davao del Norte,1500,2025,3,0.19733333333333333
+Tilapia,Lumiad,Davao City,Davao del Sur,1500,2025,3,0.196
+Tilapia,Sindaton,Panabo City,Davao del Norte,2000,2025,3,0.1955
+Tilapia,Southern Davao,Panabo City,Davao del Norte,100,2025,3,0.19
+Tilapia,New Visayas,Sto Thomas,Davao del Norte,5000,2025,3,0.1884
+Tilapia,Kinamayan,Sto Thomas,Davao del Norte,6000,2025,3,0.18783333333333332
+Tilapia,Magnum,Tagum City,Davao del Norte,5000,2025,4,0.1996
+Tilapia,Nanyo,Panabo City,Davao del Norte,1000,2025,4,0.197
+Tilapia,Deco Subdivision,Panabo City,Davao del Norte,100,2025,4,0.19
+Tilapia,Tibulao,Carmen,Davao del Norte,1500,2025,4,0.188
+Tilapia,Apokon,Tagum City,Davao del Norte,500,2025,4,0.188
+Tilapia,Tubod,Carmen,Davao del Norte,500,2025,4,0.188
+Tilapia,Sampao,Kapalong,Davao del Norte,1500,2025,4,0.19266666666666668
+Tilapia,Montivista,Panabo City,Davao del Norte,1500,2025,4,0.19866666666666666
+Tilapia,Anitap,Laak,Davao de Oro,1500,2025,4,0.19
+Tilapia,San Roque,New Bataan,Davao de Oro,2500,2025,4,0.1964
+Tilapia,Ising,Carmen,Davao del Norte,3000,2025,4,0.19733333333333333
+Tilapia,Ising,Carmen,Davao del Norte,13000,2025,4,0.19538461538461538
+Tilapia,Southern Davao,Panabo City,Davao del Norte,1500,2025,4,0.188
+Tilapia,New Corella,Tagum City,Davao del Norte,6000,2025,5,0.19166666666666668
+Tilapia,Tubod,Carmen,Davao del Norte,2000,2025,5,0.199
+Tilapia,Magupising,Dujali,Davao del Norte,10000,2025,5,0.1992
+Tilapia,Magupising,Dujali,Davao del Norte,7000,2025,5,0.18842857142857142
+Tilapia,Cabasagan,Boston,Davao Oriental,5000,2025,5,0.1926
+Tilapia,Upper Licanan,Panabo City,Davao del Norte,1000,2025,6,0.188
+Tilapia,Upper Licanan,Panabo City,Davao del Norte,1000,2025,6,0.199
+Tilapia,San Fernando,Malabalay City,Bukidnon,1500,2025,6,0.19533333333333333
+Tilapia,Aragon,Cateel,Davao Occidental,30000,2025,6,0.19833333333333333
+Tilapia,Catalunan Grande,Davao City,Davao del Sur,10000,2025,6,0.1976
+Tilapia,San Nicolas,Panabo City,Davao del Norte,2000,2025,6,0.1905
+Tilapia,Consolacion,Panabo City,Davao del Norte,5000,2025,8,0.1986
+Tilapia,Catalunan Grande,Davao City,Davao del Sur,1000,2025,8,0.188
+Tilapia,Tres De Mayo,Digos City,Davao del Sur,20000,2025,8,0.19385
+Tilapia,Bajada,Davao City,Davao del Sur,300,2025,8,0.19666666666666666
+Tilapia,Busaon,Tagum City,Davao del Norte,15000,2025,8,0.19346666666666668
+Tilapia,San Francisco,Panabo City,Davao del Norte,90,2025,8,0.18888888888888888
+Tilapia,Tubod,Carmen,Davao del Norte,100,2025,8,0.19
+Tilapia,Tubod,Carmen,Davao del Norte,1000,2025,8,0.192
+Tilapia,Nanyo,Panabo City,Davao del Norte,500,2025,8,0.188

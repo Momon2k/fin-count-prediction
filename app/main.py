@@ -33,10 +33,6 @@ from app.predictor import predictor
 from app.database import init_db, create_tables, get_db, is_db_available
 from app import crud
 
-model = predictor.unified_model
-scaler = predictor.scaler
-encoders = predictor.label_encoders
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -79,11 +75,11 @@ app.add_middleware(
     tags=["Prediction"],
 )
 def predict_distribution(request: DistributionPredictionRequest):
-    if model is None or scaler is None or encoders is None:
+    if predictor.unified_model is None or predictor.scaler is None:
         return _error_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             error="Model artifacts not loaded",
-            detail="unified model / scaler / encoders are not available",
+            detail="unified model / scaler are not available",
         )
 
     try:

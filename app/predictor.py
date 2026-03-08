@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 FEATURE_COLUMNS = ["Species", "Barangay", "Municipality", "Province", "Fingerlings", "Year", "Month"]
+CATEGORICAL_COLUMNS = ["Species", "Barangay", "Municipality", "Province"]
 
 
 class ModelPredictor:
@@ -28,6 +29,7 @@ class ModelPredictor:
         self.models: Dict[str, Any] = {}
         self.model_info: Dict[str, Dict] = {}
         self.unified_model: Optional[Any] = None
+        self.categorical_encoder: Optional[Any] = None
         self.label_encoders: Optional[Dict[str, Any]] = None
         self.scaler: Optional[Any] = None
         self._load_models()
@@ -110,6 +112,10 @@ class ModelPredictor:
 
         unified_path = self._resolve_artifact_path(getattr(settings, "unified_model_path", ""), "unified")
         encoders_path = self._resolve_artifact_path(getattr(settings, "label_encoders_path", ""), "label_encoders")
+        categorical_encoder_path = self._resolve_artifact_path(
+            getattr(settings, "categorical_encoder_path", ""),
+            "categorical_encoder",
+        )
         scaler_path = self._resolve_artifact_path(getattr(settings, "scaler_path", ""), "scaler")
 
         if unified_path:
@@ -137,6 +143,13 @@ class ModelPredictor:
                     raise ValueError("label_encoders.pkl must contain a dict of encoders")
             except Exception as e:
                 logger.error(f"✗ Failed to load label encoders: {e}")
+
+        if categorical_encoder_path:
+            try:
+                logger.info(f"Loading categorical encoder from {categorical_encoder_path}")
+                self.categorical_encoder = self._load_artifact(categorical_encoder_path)
+            except Exception as e:
+                logger.error(f"✗ Failed to load categorical encoder: {e}")
 
         if scaler_path:
             try:
@@ -419,8 +432,53 @@ class ModelPredictor:
         """
         n_predictions = len(date_range)
 
+        def normalize(value: Any) -> str:
+            if value is None:
+                return ""
+            return " ".join(str(value).strip().split()).title()
+
+        if self.categorical_encoder is not None:
+            cats = pd.DataFrame(
+                [
+                    {
+                        "Species": normalize(species),
+                        "Barangay": normalize(barangay),
+                        "Municipality": normalize(municipality),
+                        "Province": normalize(province),
+                    }
+                ]
+            )
+            encoded = self.categorical_encoder.transform(cats[CATEGORICAL_COLUMNS])
+            encoded_species = float(encoded[0][0])
+            encoded_barangay = float(encoded[0][1])
+            encoded_municipality = float(encoded[0][2])
+            encoded_province = float(encoded[0][3])
+
+            df = pd.DataFrame(
+                {
+                    "Species": [encoded_species] * n_predictions,
+                    "Barangay": [encoded_barangay] * n_predictions,
+                    "Municipality": [encoded_municipality] * n_predictions,
+                    "Province": [encoded_province] * n_predictions,
+                    "Fingerlings": [float(fingerlings)] * n_predictions,
+                    "Year": [int(d.year) for d in date_range],
+                    "Month": [int(d.month) for d in date_range],
+                }
+            )
+
+            df = df[FEATURE_COLUMNS].astype(float)
+
+            if self.scaler is None:
+                raise ValueError("Scaler is not loaded")
+
+            scaled = self.scaler.transform(df.to_numpy())
+            if scaled.shape != (n_predictions, 7):
+                raise ValueError("Final model input must have shape (n_samples, 7)")
+
+            return pd.DataFrame(scaled, columns=FEATURE_COLUMNS)
+
         if self.label_encoders is None:
-            raise ValueError("Label encoders are not loaded")
+            raise ValueError("Categorical encoders are not loaded")
 
         def get_encoder(col: str):
             direct = self.label_encoders.get(col)
@@ -429,10 +487,10 @@ class ModelPredictor:
             lowered = {str(k).lower(): v for k, v in self.label_encoders.items()}
             return lowered.get(col.lower())
 
-        def encode_or_reject(col: str, value: str) -> int:
+        def encode_or_unknown(col: str, value: str) -> int:
             encoder = get_encoder(col)
             if encoder is None:
-                raise ValueError(f"Missing label encoder for {col}")
+                return -1
 
             classes = getattr(encoder, "classes_", None)
             first = None
@@ -443,20 +501,17 @@ class ModelPredictor:
             if expects_numeric:
                 s = str(value)
                 if not s.isdigit():
-                    raise ValueError(
-                        f"Unknown label for {col}: {value}. "
-                        f"Current encoder expects numeric codes; provide codes or re-save encoders trained on labels."
-                    )
+                    return -1
                 try:
                     code_value = int(s)
                 except Exception as e:
-                    raise ValueError(f"Unknown label for {col}: {value}") from e
+                    return -1
                 try:
                     return int(encoder.transform([code_value])[0])
                 except Exception as e:
-                    raise ValueError(f"Unknown label for {col}: {value}") from e
+                    return -1
 
-            raw = str(value).strip()
+            raw = normalize(value)
             try:
                 return int(encoder.transform([raw])[0])
             except Exception:
@@ -497,12 +552,12 @@ class ModelPredictor:
                         except Exception:
                             pass
 
-            raise ValueError(f"Unknown label for {col}: {value}")
+            return -1
 
-        encoded_species = encode_or_reject("Species", species)
-        encoded_barangay = encode_or_reject("Barangay", barangay)
-        encoded_municipality = encode_or_reject("Municipality", municipality)
-        encoded_province = encode_or_reject("Province", province)
+        encoded_species = encode_or_unknown("Species", species)
+        encoded_barangay = encode_or_unknown("Barangay", barangay)
+        encoded_municipality = encode_or_unknown("Municipality", municipality)
+        encoded_province = encode_or_unknown("Province", province)
 
         df = pd.DataFrame(
             {
