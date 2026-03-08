@@ -26,10 +26,16 @@ from app.models import (
     PredictionPoint,
     InputFeatures,
     DbCheckResponse,
+    DistributionPredictionRequest,
+    DistributionPredictionResponse,
 )
 from app.predictor import predictor
 from app.database import init_db, create_tables, get_db, is_db_available
 from app import crud
+
+model = predictor.unified_model
+scaler = predictor.scaler
+encoders = predictor.label_encoders
 
 # Configure logging
 logging.basicConfig(
@@ -61,6 +67,64 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.post(
+    f"{settings.api_prefix}/predict-distribution",
+    response_model=DistributionPredictionResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+    tags=["Prediction"],
+)
+def predict_distribution(request: DistributionPredictionRequest):
+    if model is None or scaler is None or encoders is None:
+        return _error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="Model artifacts not loaded",
+            detail="unified model / scaler / encoders are not available",
+        )
+
+    try:
+        date = pd.to_datetime(request.date_distributed)
+    except Exception as e:
+        return _error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error="Invalid dateDistributed",
+            detail=str(e),
+        )
+
+    try:
+        predicted_yield_ratio = predictor.predict_single(
+            species=request.species,
+            province=request.province,
+            municipality=request.municipality,
+            barangay=request.barangay,
+            fingerlings=float(request.fingerlings),
+            year=int(date.year),
+            month=int(date.month),
+        )
+
+        predicted_harvest = predicted_yield_ratio * float(request.fingerlings)
+        if not pd.notna(predicted_harvest):
+            predicted_harvest = 0.0
+        forecast_kg = int(round(max(0.0, predicted_harvest)))
+
+        return DistributionPredictionResponse(forecastedHarvestKilos=forecast_kg)
+    except ValueError as e:
+        return _error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error="Prediction failed",
+            detail=str(e),
+        )
+    except Exception as e:
+        logger.exception("Distribution prediction failed")
+        return _error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="Internal prediction error",
+            detail=str(e),
+        )
 
 
 @app.on_event("startup")

@@ -330,3 +330,40 @@ class DbCheckResponse(BaseModel):
             }
         }
     )
+
+
+class DistributionPredictionRequest(BaseModel):
+    species: constr(min_length=1) = Field(..., description="Fish species label")
+    province: constr(min_length=1) = Field(..., description="Province label")
+    municipality: constr(min_length=1) = Field(..., description="Municipality/City label")
+    barangay: constr(min_length=1) = Field(..., description="Barangay label")
+    fingerlings: StrictInt = Field(..., ge=0, description="Fingerlings count")
+    date_distributed: str = Field(..., alias="dateDistributed", description="Distribution date (ISO 8601)")
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        extra="ignore",
+        json_schema_extra={
+            "example": {
+                "species": "tilapia",
+                "province": "Pampanga",
+                "municipality": "Mexico",
+                "barangay": "San Roque",
+                "fingerlings": 2445,
+                "dateDistributed": "2024-03-01",
+            }
+        },
+    )
+
+
+class DistributionPredictionResponse(BaseModel):
+    forecasted_harvest_kilos: StrictInt = Field(..., alias="forecastedHarvestKilos", ge=0)
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "forecastedHarvestKilos": 603,
+            }
+        },
+    )
