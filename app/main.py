@@ -11,6 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 import logging
+import math
 from pydantic import ValidationError
 import pandas as pd
 
@@ -395,31 +396,6 @@ async def predict_prices(
         effective_municipality = request.municipality if data_level_used != "province" else "All Cities"
         effective_barangay = request.barangay if data_level_used == "barangay" else "All Barangays"
 
-        training_years = 3
-        try:
-            training_start = end_date.replace(year=end_date.year - training_years)
-        except ValueError:
-            training_start = end_date.replace(year=end_date.year - training_years, day=28)
-        training_start_str = training_start.strftime("%Y-%m-%d")
-
-        training_distributions = crud.get_distributions(
-            db=db,
-            date_from=training_start_str,
-            date_to=request.date_to,
-            species_filter=species_filter,
-            province=request.province,
-            municipality=effective_municipality,
-            barangay=effective_barangay,
-        )
-        avg_fingerlings: Optional[float] = None
-        positive_fingerlings = [
-            float(d.get("fingerlings") or 0.0)
-            for d in training_distributions
-            if float(d.get("fingerlings") or 0.0) > 0
-        ]
-        if positive_fingerlings:
-            avg_fingerlings = float(sum(positive_fingerlings)) / float(len(positive_fingerlings))
-
         actual_fingerlings_by_month = {}
         actual_harvest_by_month = {}
         predicted_harvest_by_month = {}
@@ -480,7 +456,7 @@ async def predict_prices(
                     actual_harvest_by_month[key] = actual_harvest_by_month.get(key, 0.0) + float(actual_harvest or 0.0)
 
                 if finger > 0.0:
-                    dist_predicted = predictor.predict_single(
+                    dist_predicted_yield = predictor.predict_single(
                         species=normalized_species,
                         province=str(dist["province"]),
                         municipality=str(dist["municipality"]),
@@ -489,10 +465,19 @@ async def predict_prices(
                         year=int(dt_year),
                         month=int(dt_month),
                     )
-                    if dist_predicted <= 0:
-                        dist_predicted = finger * 0.35
-                    dist_predicted = float(round(float(dist_predicted)))
-                    predicted_harvest_by_month[key] = predicted_harvest_by_month.get(key, 0.0) + float(dist_predicted)
+                    predicted_yield = float(dist_predicted_yield) if dist_predicted_yield is not None else float("nan")
+                    if not math.isfinite(predicted_yield):
+                        predicted_yield = 0.35
+                    predicted_yield = max(0.1, min(predicted_yield, 0.9))
+
+                    predicted_harvest = round(predicted_yield * float(finger))
+                    if not predicted_harvest or predicted_harvest <= 0:
+                        predicted_harvest = round(float(finger) * 0.35)
+
+                    logger.info(
+                        f"Yield prediction: yield={predicted_yield:.3f}, fingerlings={finger}, harvest={predicted_harvest}"
+                    )
+                    predicted_harvest_by_month[key] = predicted_harvest_by_month.get(key, 0.0) + float(predicted_harvest)
             logger.info(
                 f"Chart mode aggregation: {len(display_distributions)} distributions processed, "
                 f"{len(predicted_harvest_by_month)} monthly predictions generated"
@@ -550,20 +535,27 @@ async def predict_prices(
                 total_actual_harvest += actual_harvest
 
                 requested_fingerlings = float(request.fingerlings)
-                base_fingerlings = float(avg_fingerlings) if avg_fingerlings is not None and avg_fingerlings > 0 else requested_fingerlings
-                predicted_value = predictor.predict_single(
+                predicted_yield = predictor.predict_single(
                     species=normalized_species,
                     province=request.province,
                     municipality=request.municipality,
                     barangay=request.barangay,
-                    fingerlings=base_fingerlings,
+                    fingerlings=requested_fingerlings,
                     year=year,
                     month=month,
                 )
-                if avg_fingerlings is not None and avg_fingerlings > 0:
-                    predicted_value *= requested_fingerlings / float(avg_fingerlings)
-                if predicted_value <= 0:
-                    predicted_value = requested_fingerlings * 0.35
+                predicted_yield_value = float(predicted_yield) if predicted_yield is not None else float("nan")
+                if not math.isfinite(predicted_yield_value):
+                    predicted_yield_value = 0.35
+                predicted_yield_value = max(0.1, min(predicted_yield_value, 0.9))
+
+                predicted_value = round(predicted_yield_value * float(requested_fingerlings))
+                if not predicted_value or predicted_value <= 0:
+                    predicted_value = round(float(requested_fingerlings) * 0.35)
+
+                logger.info(
+                    f"Yield prediction: yield={predicted_yield_value:.3f}, fingerlings={requested_fingerlings}, harvest={predicted_value}"
+                )
 
                 confidence_margin = predicted_value * 0.15
                 conf_lower = max(0.0, predicted_value - confidence_margin)
