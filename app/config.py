@@ -29,6 +29,10 @@ class Settings(BaseSettings):
         default="http://localhost:3000,http://localhost:3001,https://*.railway.app,https://*.vercel.app",
         validation_alias="ALLOWED_ORIGINS"
     )
+    allowed_origin_regex: Optional[str] = Field(
+        default=r"^https://.*\.railway\.app$|^https://.*\.vercel\.app$|^http://localhost(:\d+)?$",
+        validation_alias="ALLOWED_ORIGIN_REGEX",
+    )
     
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -53,6 +57,11 @@ class Settings(BaseSettings):
                 pass
 
         return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+    @property
+    def cors_origin_regex(self) -> Optional[str]:
+        raw = (self.allowed_origin_regex or "").strip()
+        return raw or None
     
     # Model Configuration
     models_dir: str = "app/models"
