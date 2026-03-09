@@ -418,61 +418,6 @@ async def predict_prices(
             key = (int(r["year"]), int(r["month"]))
             groups_by_month.setdefault(key, []).append(r)
 
-        effective_municipality = request.municipality if data_level_used != "province" else "All Cities"
-        effective_barangay = request.barangay if data_level_used == "barangay" else "All Barangays"
-
-        training_years = 3
-        try:
-            training_start = end_date.replace(year=end_date.year - training_years)
-        except ValueError:
-            training_start = end_date.replace(year=end_date.year - training_years, day=28)
-        training_start_str = training_start.strftime("%Y-%m-%d")
-
-        training_distributions = crud.get_distributions(
-            db=db,
-            date_from=training_start_str,
-            date_to=request.date_to,
-            species=request.species,
-            province=request.province,
-            municipality=effective_municipality,
-            barangay=effective_barangay,
-        )
-        avg_fingerlings: Optional[float] = None
-        positive_fingerlings = [
-            float(d.get("fingerlings") or 0.0)
-            for d in training_distributions
-            if float(d.get("fingerlings") or 0.0) > 0
-        ]
-        if positive_fingerlings:
-            avg_fingerlings = float(sum(positive_fingerlings)) / float(len(positive_fingerlings))
-
-        distributions_by_month = {}
-        if request.fingerlings is None:
-            display_distributions = crud.get_distributions(
-                db=db,
-                date_from=request.date_from,
-                date_to=request.date_to,
-                species=request.species,
-                province=request.province,
-                municipality=effective_municipality,
-                barangay=effective_barangay,
-            )
-            for d in display_distributions:
-                dd = d.get("date_distributed")
-                if dd is None:
-                    continue
-                dt_year = getattr(dd, "year", None)
-                dt_month = getattr(dd, "month", None)
-                if dt_year is None or dt_month is None:
-                    try:
-                        parsed = datetime.fromisoformat(str(dd))
-                        dt_year = parsed.year
-                        dt_month = parsed.month
-                    except Exception:
-                        continue
-                key = (int(dt_year), int(dt_month))
-                distributions_by_month.setdefault(key, []).append(d)
-
         predictions: List[PredictionPoint] = []
         total_actual_harvest = 0.0
         for date in date_range:
@@ -481,62 +426,50 @@ async def predict_prices(
             month_rows = groups_by_month.get((year, month), [])
 
             if request.fingerlings is None:
-                month_distributions = distributions_by_month.get((year, month), [])
-                total_fingerlings = float(sum(float(x.get("fingerlings") or 0) for x in month_distributions))
+                total_fingerlings = float(sum(float(x.get("total_fingerlings") or 0) for x in month_rows))
                 total_harvest = float(
-                    sum(
-                        float(x.get("actual_harvest_kilos") or 0)
-                        for x in month_distributions
-                        if x.get("actual_harvest_kilos") is not None
-                    )
+                    sum(float(x.get("total_harvest") or 0) for x in month_rows if x.get("total_harvest") is not None)
                 )
             else:
-                total_fingerlings = float(sum(float(x.get("total_fingerlings") or 0) for x in month_rows))
+                total_fingerlings = float(request.fingerlings)
                 total_harvest = float(
                     sum(float(x.get("total_harvest") or 0) for x in month_rows if x.get("total_harvest") is not None)
                 )
             actual_harvest = float(total_harvest or 0.0)
             total_actual_harvest += actual_harvest
 
-            predicted_value = 0.0
+            predicted_harvest = 0.0
             if request.fingerlings is None:
-                month_distributions = distributions_by_month.get((year, month), [])
-                base_fingerlings = float(avg_fingerlings) if avg_fingerlings is not None and avg_fingerlings > 0 else None
-                for dist in month_distributions:
-                    finger = float(dist.get("fingerlings") or 0)
+                for r in month_rows:
+                    finger = float(r.get("total_fingerlings") or 0)
                     if finger <= 0:
                         continue
-                    dist_base_fingerlings = base_fingerlings if base_fingerlings is not None else finger
-                    dist_predicted = predictor.predict_single(
+                    predicted_yield_ratio = predictor.predict_single(
                         species=request.species,
-                        province=str(dist["province"]),
-                        municipality=str(dist["municipality"]),
-                        barangay=str(dist["barangay"]),
-                        fingerlings=float(dist_base_fingerlings),
+                        province=str(r["province"]),
+                        municipality=str(r["municipality"]),
+                        barangay=str(r["barangay"]),
+                        fingerlings=finger,
                         year=year,
                         month=month,
                     )
-                    if avg_fingerlings is not None and avg_fingerlings > 0:
-                        dist_predicted *= finger / float(avg_fingerlings)
-                    predicted_value += float(dist_predicted)
+                    predicted_harvest += float(predicted_yield_ratio) * finger
             else:
                 requested_fingerlings = float(request.fingerlings)
-                base_fingerlings = float(avg_fingerlings) if avg_fingerlings is not None and avg_fingerlings > 0 else requested_fingerlings
-                predicted_value = predictor.predict_single(
+                predicted_yield_ratio = predictor.predict_single(
                     species=request.species,
                     province=request.province,
                     municipality=request.municipality,
                     barangay=request.barangay,
-                    fingerlings=base_fingerlings,
+                    fingerlings=requested_fingerlings,
                     year=year,
                     month=month,
                 )
-                if avg_fingerlings is not None and avg_fingerlings > 0:
-                    predicted_value *= requested_fingerlings / float(avg_fingerlings)
+                predicted_harvest = float(predicted_yield_ratio) * requested_fingerlings
 
-            confidence_margin = predicted_value * 0.15
-            conf_lower = max(0.0, predicted_value - confidence_margin)
-            conf_upper = predicted_value + confidence_margin
+            confidence_margin = predicted_harvest * 0.15
+            conf_lower = max(0.0, predicted_harvest - confidence_margin)
+            conf_upper = predicted_harvest + confidence_margin
 
             point_fingerlings = float(total_fingerlings) if request.fingerlings is None else float(request.fingerlings)
             input_features = InputFeatures(
@@ -552,7 +485,7 @@ async def predict_prices(
             predictions.append(
                 PredictionPoint(
                     date=date.strftime("%Y-%m-%d"),
-                    predicted_harvest=float(predicted_value),
+                    predicted_harvest=float(predicted_harvest),
                     actual_harvest=float(actual_harvest),
                     input_features=input_features,
                     confidence_lower=conf_lower,

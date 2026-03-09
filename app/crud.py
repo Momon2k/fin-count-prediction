@@ -97,10 +97,12 @@ def get_distribution_monthly_groups(
     date_to: str,
     species: str,
     province: str,
-    municipality: str,
-    barangay: str,
+    municipality: str = "All Cities",
+    barangay: str = "All Barangays",
+    city: Optional[str] = None,
 ) -> List[dict]:
-    params = {"dateFrom": date_from, "dateTo": date_to, "species": species}
+    municipality = city if city is not None else municipality
+    params = {"date_from": date_from, "date_to": date_to, "species": species}
 
     if province != "All Provinces":
         params["province"] = province
@@ -112,7 +114,7 @@ def get_distribution_monthly_groups(
     def _execute_for_bucket_date(bucket_date_expr: str):
         where = [
             "`deletedAt` IS NULL",
-            "`dateDistributed` BETWEEN :dateFrom AND :dateTo",
+            f"{bucket_date_expr} BETWEEN :date_from AND :date_to",
             "LOWER(`species`) LIKE CONCAT('%', LOWER(:species), '%')",
         ]
 
@@ -149,7 +151,10 @@ def get_distribution_monthly_groups(
 
         return db.execute(text(sql), params)
 
-    result = _execute_for_bucket_date("`dateDistributed`")
+    try:
+        result = _execute_for_bucket_date("COALESCE(`actualHarvestDate`, `dateDistributed`)")
+    except Exception:
+        result = _execute_for_bucket_date("`dateDistributed`")
 
     return [dict(r) for r in result.mappings().all()]
 

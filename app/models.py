@@ -15,6 +15,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.json_schema import SkipJsonSchema
 
 ISODate = constr(pattern=r"^\d{4}-\d{2}-\d{2}$")
 
@@ -33,7 +34,9 @@ class PredictionRequest(BaseModel):
         description="Municipality/City label",
     )
     barangay: constr(min_length=1) = Field(..., description="Barangay label")
-    fingerlings: Optional[StrictInt] = Field(None, description="Optional fingerlings count for single-distribution forecast")
+    fingerlings: SkipJsonSchema[Optional[StrictInt]] = Field(
+        None, description="Optional fingerlings count for single-distribution forecast"
+    )
     
     model_config = ConfigDict(
         populate_by_name=True,
